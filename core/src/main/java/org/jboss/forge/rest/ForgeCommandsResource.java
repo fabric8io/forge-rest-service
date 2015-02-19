@@ -26,10 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObjectBuilder;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -68,14 +64,14 @@ public class ForgeCommandsResource {
     @GET
     @Path("/commandNames")
     @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray getCommandNames() {
+    public List<String> getCommandNames() {
+        List<String> answer = new ArrayList<>();
         try (RestUIContext context = new RestUIContext()) {
-            JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
             for (String commandName : commandFactory.getCommandNames(context)) {
-                arrayBuilder.add(commandName);
+                answer.add(commandName);
             }
-            return arrayBuilder.build();
         }
+        return answer;
     }
 
     @GET

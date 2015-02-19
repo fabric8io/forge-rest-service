@@ -26,15 +26,6 @@
       <artifactId>forge-rest-core</artifactId>
       <version>${project.version}</version>
     </dependency>
-
-    <dependency>
-      <groupId>org.glassfish</groupId>
-      <artifactId>javax.json</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.glassfish</groupId>
-      <artifactId>jsonp-jaxrs</artifactId>
-    </dependency>
   </dependencies>
 
   <build>

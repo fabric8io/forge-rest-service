@@ -1,8 +1,6 @@
 package org.jboss.forge.rest;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import org.glassfish.json.jaxrs.JsonStructureBodyReader;
-import org.glassfish.json.jaxrs.JsonStructureBodyWriter;
 
 import javax.inject.Inject;
 import javax.ws.rs.ApplicationPath;
@@ -25,8 +23,6 @@ public class ForgeRestApplication extends Application {
                 Arrays.asList(
                         rootResource,
                         forgeResource,
-                        new JsonStructureBodyReader(),
-                        new JsonStructureBodyWriter(),
                         new JacksonJsonProvider()
                 )
         );
