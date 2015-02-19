@@ -2,22 +2,35 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.jboss.forge</groupId>
-  <artifactId>forge-rest-service</artifactId>
+  <groupId>org.jboss.forge.rest</groupId>
+  <artifactId>forge-rest-parent</artifactId>
   <version>1.0.0-SNAPSHOT</version>
-  <packaging>war</packaging>
+  <packaging>pom</packaging>
+
   <properties>
+    <addon.repository>${project.build.directory}/addon-repository</addon.repository>
+
     <maven.compiler.source>1.7</maven.compiler.source>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.target>1.7</maven.compiler.target>
-    <version.furnace>2.13.0-SNAPSHOT</version.furnace>
+
+    <fabric8.version>2.0.27</fabric8.version>
+    <jackson.version>2.4.1</jackson.version>
+
+    <!--
+    lets use the same version as is available in eclipse for now...
+
+    <furnace.version>2.14.0.Final</furnace.version>
+    -->
+    <furnace.version>2.13.0.Final</furnace.version>
   </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>org.jboss.forge</groupId>
         <artifactId>forge-bom</artifactId>
-        <version>${version.furnace}</version>
+        <version>${furnace.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -25,89 +38,23 @@
         <groupId>javax</groupId>
         <artifactId>javaee-api</artifactId>
         <version>7.0</version>
-        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish</groupId>
+        <artifactId>javax.json</artifactId>
+        <version>1.0.4</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish</groupId>
+        <artifactId>jsonp-jaxrs</artifactId>
+        <version>1.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
-  <dependencies>
-    <dependency>
-      <groupId>org.jboss.forge.furnace</groupId>
-      <artifactId>furnace</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.forge.furnace</groupId>
-      <artifactId>furnace-se</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.forge.addon</groupId>
-      <artifactId>environment-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.forge.addon</groupId>
-      <artifactId>ui-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.forge.addon</groupId>
-      <artifactId>ui-spi</artifactId>
-      <classifier>forge-addon</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.forge.addon</groupId>
-      <artifactId>convert-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.forge.addon</groupId>
-      <artifactId>facets-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.forge.addon</groupId>
-      <artifactId>resources-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.forge.addon</groupId>
-      <artifactId>dependencies-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.forge.addon</groupId>
-      <artifactId>projects-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax</groupId>
-      <artifactId>javaee-api</artifactId>
-      <scope>provided</scope>
-    </dependency>
-  </dependencies>
-  <build>
-    <finalName>forge-rest-service</finalName>
-    <plugins>
-      <plugin>
-        <artifactId>maven-war-plugin</artifactId>
-        <version>2.4</version>
-        <configuration>
-          <failOnMissingWebXml>false</failOnMissingWebXml>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.jboss.forge.furnace</groupId>
-        <artifactId>furnace-maven-plugin</artifactId>
-        <version>${version.furnace}</version>
-        <executions>
-          <execution>
-            <id>deploy-addons</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>addon-install</goal>
-            </goals>
-            <inherited>false</inherited>
-            <configuration>
-              <addonRepository>${project.build.directory}/${project.artifactId}/WEB-INF/addon-repository</addonRepository>
-              <addonIds>
-                <addonId>org.jboss.forge.addon:core,${version.furnace}</addonId>
-              </addonIds>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
+
+  <modules>
+    <module>core</module>
+    <module>main</module>
+    <module>web</module>
+  </modules>
 </project>

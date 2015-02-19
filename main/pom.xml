@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.jboss.forge.rest</groupId>
+    <artifactId>forge-rest-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>forge-rest-main</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.jboss.forge.rest</groupId>
+      <artifactId>forge-rest-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>javax</groupId>
+      <artifactId>javaee-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish</groupId>
+      <artifactId>javax.json</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish</groupId>
+      <artifactId>jsonp-jaxrs</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.fabric8.quickstarts</groupId>
+      <artifactId>rest-utils</artifactId>
+      <version>${fabric8.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.7.7</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.jboss.forge.furnace</groupId>
+        <artifactId>furnace-maven-plugin</artifactId>
+        <version>${furnace.version}</version>
+        <executions>
+          <execution>
+            <id>deploy-addons</id>
+            <phase>test-compile</phase>
+            <goals>
+              <goal>addon-install</goal>
+            </goals>
+            <inherited>false</inherited>
+            <configuration>
+              <addonRepository>${addon.repository}</addonRepository>
+              <addonIds>
+                <!--
+                                <addonId>org.jboss.forge.addon:core,${furnace.version}</addonId>
+                -->
+                <addonId>io.fabric8.forge:camel,2.2-SNAPSHOT</addonId>
+              </addonIds>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.2.1</version>
+        <configuration>
+          <mainClass>org.jboss.forge.rest.Main</mainClass>
+          <includePluginDependencies>false</includePluginDependencies>
+          <systemProperties>
+            <systemProperty>
+              <key>FORGE_ADDON_DIRECTORY</key>
+              <value>${addon.repository}</value>
+            </systemProperty>
+          </systemProperties>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
