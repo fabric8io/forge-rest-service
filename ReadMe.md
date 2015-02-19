@@ -30,10 +30,9 @@ Some commands don't require any input; usually though the selected resource is r
 
 #### List the Camel components on a project
 
-Try this if youi're running the REST service as above:
+Try this if you are running the REST service as described above:
 
     curl -H "Content-Type: application/json" -d '{"resource":"../examples/example-camel-cdi"}' http://localhost:8588/api/forge/commands/project-camel-component-list
-
 
 ### Modules
 
