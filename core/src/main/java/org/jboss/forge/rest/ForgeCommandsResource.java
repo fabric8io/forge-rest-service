@@ -14,6 +14,7 @@ import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.furnace.Furnace;
 import org.jboss.forge.furnace.addons.AddonRegistry;
 import org.jboss.forge.furnace.services.Imported;
+import org.jboss.forge.rest.dto.CommandInfoDTO;
 import org.jboss.forge.rest.dto.ExecutionRequest;
 import org.jboss.forge.rest.dto.ExecutionResult;
 import org.jboss.forge.rest.dto.ExecutionStatus;
@@ -39,11 +40,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static io.fabric8.utils.Strings.emptyIfNull;
 
 @Path("/api/forge")
 @Stateless
@@ -65,9 +66,9 @@ public class ForgeCommandsResource {
     }
 
     @GET
-    @Path("/commands")
+    @Path("/commandNames")
     @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray getCommands() {
+    public JsonArray getCommandNames() {
         try (RestUIContext context = new RestUIContext()) {
             JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
             for (String commandName : commandFactory.getCommandNames(context)) {
@@ -78,26 +79,51 @@ public class ForgeCommandsResource {
     }
 
     @GET
+    @Path("/commands")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<CommandInfoDTO> getCommands() {
+        List<CommandInfoDTO> answer = new ArrayList<>();
+        try (RestUIContext context = new RestUIContext()) {
+            for (String name : commandFactory.getCommandNames(context)) {
+                CommandInfoDTO dto = createCommandInfoDTO(name, context);
+                if (dto != null) {
+                    answer.add(dto);
+                }
+            }
+        }
+        return answer;
+    }
+
+    @GET
     @Path("/commands/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getCommandInfo(@PathParam("name") String name) {
-        JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
+        CommandInfoDTO answer = null;
         try (RestUIContext context = new RestUIContext()) {
-            UICommand command = commandFactory.getCommandByName(context, name);
-            if (command == null)
-                return Response.status(Status.NOT_FOUND).build();
-            UICommandMetadata metadata = command.getMetadata(context);
-
-            objectBuilder.add("name", name);
-            objectBuilder.add("description", metadata.getDescription());
-            if (metadata.getCategory() != null)
-                objectBuilder
-                        .add("category", metadata.getCategory().toString());
-            if (metadata.getDocLocation() != null)
-                objectBuilder.add("docLocation", metadata.getDocLocation()
-                        .toString());
+            answer = createCommandInfoDTO(name, context);
         }
-        return Response.ok(objectBuilder.build()).build();
+        if (answer != null) {
+            return Response.ok(answer).build();
+        } else {
+            return Response.status(Status.NOT_FOUND).build();
+        }
+    }
+
+    protected CommandInfoDTO createCommandInfoDTO(String name, RestUIContext context) {
+        UICommand command = commandFactory.getCommandByName(context, name);
+        CommandInfoDTO answer = null;
+        if (command != null) {
+            UICommandMetadata metadata = command.getMetadata(context);
+            String description = metadata.getDescription();
+            String category = toStringOrNull(metadata.getCategory());
+            String docLocation = toStringOrNull(metadata.getDocLocation());
+            answer = new CommandInfoDTO(name, description, category, docLocation);
+        }
+        return answer;
+    }
+
+    protected static String toStringOrNull(Object value) {
+        return value != null ? value.toString() : null;
     }
 
     @POST
