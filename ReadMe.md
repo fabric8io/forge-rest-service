@@ -28,6 +28,12 @@ To invoke a command **my-command* POST an ExecutionRequest as JSON to the URI **
 
 Some commands don't require any input; usually though the selected resource is required; particularly for project related commands which need to know the folder of the project.
 
+#### List the Camel components on a project
+
+Try this if youi're running the REST service as above:
+
+    curl -H "Content-Type: application/json" -d '{"resource":"../examples/example-camel-cdi"}' http://localhost:8588/api/forge/commands/project-camel-component-list
+
 
 ### Modules
 
