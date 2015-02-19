@@ -39,3 +39,10 @@ Try this if you are running the REST service as described above:
 * **core** provides the core library
 * **main** provides a stand alone executable main()
 * **war** provides a WAR that can be deployed in wildfly et al
+
+
+### HTML5 Console
+
+The [hawtio](http://hawt.io) project has a HTML5 plugin for [Forge](http://forge.jboss.org/) called [hawtio-forge](https://github.com/hawtio/hawtio-forge) to interact with Forge from your web browser using this REST API.
+
+For more details check out the [hawtio-forge documentation](https://github.com/hawtio/hawtio-forge/blob/master/ReadMe.md)
