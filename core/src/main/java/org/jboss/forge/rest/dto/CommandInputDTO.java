@@ -17,12 +17,18 @@
  */
 package org.jboss.forge.rest.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CommandInputDTO {
     private final CommandInfoDTO info;
     private Map<String,PropertyDTO> properties = new HashMap<>();
+    private List<String> required = new ArrayList<>();
 
     public CommandInputDTO(CommandInfoDTO info) {
         this.info = info;
@@ -38,6 +44,9 @@ public class CommandInputDTO {
 
     public void addProperty(String key, PropertyDTO dto) {
         properties.put(key, dto);
+        if (dto.isRequired()) {
+            required.add(key);
+        }
     }
 
     public CommandInfoDTO getInfo() {
@@ -46,5 +55,9 @@ public class CommandInputDTO {
 
     public Map<String, PropertyDTO> getProperties() {
         return properties;
+    }
+
+    public List<String> getRequired() {
+        return required;
     }
 }

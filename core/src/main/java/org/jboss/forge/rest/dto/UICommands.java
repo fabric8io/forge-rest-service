@@ -17,15 +17,23 @@
  */
 package org.jboss.forge.rest.dto;
 
+import org.jboss.forge.addon.projects.ProjectProvider;
+import org.jboss.forge.addon.projects.ProjectType;
 import org.jboss.forge.addon.projects.ui.AbstractProjectCommand;
 import org.jboss.forge.addon.ui.command.UICommand;
 import org.jboss.forge.addon.ui.controller.CommandController;
+import org.jboss.forge.addon.ui.facets.HintsFacet;
 import org.jboss.forge.addon.ui.input.InputComponent;
+import org.jboss.forge.addon.ui.input.SelectComponent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.rest.ui.RestUIContext;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.jboss.forge.rest.dto.JsonSchemaTypes.getJsonSchemaTypeName;
 
 /**
  */
@@ -63,8 +71,6 @@ public class UICommands {
     }
 
     public static PropertyDTO createInputDTO(InputComponent<?, ?> input) {
-        System.out.println("Got input: " + input);
-
         String name = input.getName();
         String description = input.getDescription();
         String label = input.getLabel();
@@ -72,16 +78,53 @@ public class UICommands {
         char shortNameChar = input.getShortName();
         String shortName = Character.toString(shortNameChar);
         Object value = input.getValue();
+        if (value != null) {
+            // lets make a safe way to turn to JSON
+            value = toSafeJsonValue(value);
+        }
         Class<?> valueType = input.getValueType();
         String javaType = null;
         if (valueType != null) {
             javaType = valueType.getCanonicalName();
         }
-        // TODO map java type to JSON schema type
-        String type = null;
+        String type = getJsonSchemaTypeName(valueType);
         boolean enabled = input.isEnabled();
         boolean required = input.isRequired();
-        // TODO deal with validators and facets
-        return new PropertyDTO(name, description, label, requiredMessage, value, javaType, type, enabled, required);
+        List<Object> enumValues = new ArrayList<>();
+        if (input instanceof SelectComponent) {
+            SelectComponent selectComponent = (SelectComponent) input;
+            Iterable valueChoices = selectComponent.getValueChoices();
+            for (Object valueChoice : valueChoices) {
+                Object jsonValue = toSafeJsonValue(valueChoice);
+                enumValues.add(jsonValue);
+            }
+
+        }
+        if (enumValues.isEmpty()) {
+            enumValues = null;
+        }
+        return new PropertyDTO(name, description, label, requiredMessage, value, javaType, type, enabled, required, enumValues);
+    }
+
+    /**
+     * Lets return a safe JSON value
+     */
+    protected static Object toSafeJsonValue(Object value) {
+        if (value == null) {
+            return null;
+        } else {
+            if (value instanceof Number) {
+                return value;
+            }
+            if (value instanceof ProjectProvider) {
+                ProjectProvider projectProvider = (ProjectProvider) value;
+                return projectProvider.getType();
+            }
+            if (value instanceof ProjectType) {
+                ProjectType projectType = (ProjectType) value;
+                return projectType.getType();
+            }
+            return value.toString();
+        }
     }
 }

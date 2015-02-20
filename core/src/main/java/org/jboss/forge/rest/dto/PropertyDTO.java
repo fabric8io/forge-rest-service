@@ -17,27 +17,36 @@
  */
 package org.jboss.forge.rest.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.List;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PropertyDTO {
     private final String name;
     private final String description;
-    private final String label;
+    private final String title;
     private final String requiredMessage;
     private final Object value;
     private final String javaType;
     private final String type;
     private final boolean enabled;
     private final boolean required;
+    @JsonProperty("enum")
+    private final List<Object> valueChoices;
 
-    public PropertyDTO(String name, String description, String label, String requiredMessage, Object value, String javaType, String type, boolean enabled, boolean required) {
+    public PropertyDTO(String name, String description, String title, String requiredMessage, Object value, String javaType, String type, boolean enabled, boolean required, List<Object> valueChoices) {
         this.name = name;
         this.description = description;
-        this.label = label;
+        this.title = title;
         this.requiredMessage = requiredMessage;
         this.value = value;
         this.javaType = javaType;
         this.type = type;
         this.enabled = enabled;
         this.required = required;
+        this.valueChoices = valueChoices;
     }
 
     @Override
@@ -57,8 +66,8 @@ public class PropertyDTO {
         return javaType;
     }
 
-    public String getLabel() {
-        return label;
+    public String getTitle() {
+        return title;
     }
 
     public String getName() {
@@ -83,5 +92,9 @@ public class PropertyDTO {
 
     public String getType() {
         return type;
+    }
+
+    public List<Object> getValueChoices() {
+        return valueChoices;
     }
 }

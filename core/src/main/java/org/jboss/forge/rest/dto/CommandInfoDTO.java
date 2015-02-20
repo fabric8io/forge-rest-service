@@ -17,6 +17,9 @@
  */
 package org.jboss.forge.rest.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CommandInfoDTO {
     private final String name;
     private final String description;
