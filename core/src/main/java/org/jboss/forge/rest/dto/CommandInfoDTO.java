@@ -22,12 +22,14 @@ public class CommandInfoDTO {
     private final String description;
     private final String category;
     private final String docLocation;
+    private final boolean enabled;
 
-    public CommandInfoDTO(String name, String description, String category, String docLocation) {
+    public CommandInfoDTO(String name, String description, String category, String docLocation, boolean enabled) {
         this.name = name;
         this.description = description;
         this.category = category;
         this.docLocation = docLocation;
+        this.enabled = enabled;
     }
 
     @Override
@@ -54,5 +56,9 @@ public class CommandInfoDTO {
 
     public String getName() {
         return name;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
     }
 }

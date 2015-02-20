@@ -81,11 +81,18 @@ public class ForgeCommandsResource {
     @Path("/commands")
     @Produces(MediaType.APPLICATION_JSON)
     public List<CommandInfoDTO> getCommands() {
+        return getCommands(null);
+    }
+
+    @GET
+    @Path("/commands/{path: .*}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<CommandInfoDTO> getCommands(@PathParam("path") String resourcePath) {
         List<CommandInfoDTO> answer = new ArrayList<>();
-        try (RestUIContext context = new RestUIContext()) {
+        try (RestUIContext context = createUIContext(resourcePath)) {
             for (String name : commandFactory.getCommandNames(context)) {
                 CommandInfoDTO dto = createCommandInfoDTO(context, name);
-                if (dto != null) {
+                if (dto != null && dto.isEnabled()) {
                     answer.add(dto);
                 }
             }
@@ -94,11 +101,18 @@ public class ForgeCommandsResource {
     }
 
     @GET
-    @Path("/commands/{name}")
+    @Path("/command/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getCommandInfo(@PathParam("name") String name) {
+        return getCommandInfo(name, null);
+    }
+
+    @GET
+    @Path("/command/{name}/{path: .*}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getCommandInfo(@PathParam("name") String name, @PathParam("path") String resourcePath) {
         CommandInfoDTO answer = null;
-        try (RestUIContext context = new RestUIContext()) {
+        try (RestUIContext context = createUIContext(resourcePath)) {
             answer = createCommandInfoDTO(context, name);
         }
         if (answer != null) {
@@ -106,6 +120,13 @@ public class ForgeCommandsResource {
         } else {
             return Response.status(Status.NOT_FOUND).build();
         }
+    }
+
+    @GET
+    @Path("/commandInput/{name}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getCommandInput(@PathParam("name") String name) throws Exception {
+        return getCommandInput(name, null);
     }
 
     @GET

@@ -17,6 +17,7 @@
  */
 package org.jboss.forge.rest.dto;
 
+import org.jboss.forge.addon.projects.ui.AbstractProjectCommand;
 import org.jboss.forge.addon.ui.command.UICommand;
 import org.jboss.forge.addon.ui.controller.CommandController;
 import org.jboss.forge.addon.ui.input.InputComponent;
@@ -30,12 +31,14 @@ import java.util.Set;
  */
 public class UICommands {
     public static CommandInfoDTO createCommandInfoDTO(RestUIContext context, UICommand command) {
-        CommandInfoDTO answer;UICommandMetadata metadata = command.getMetadata(context);
+        CommandInfoDTO answer;
+        UICommandMetadata metadata = command.getMetadata(context);
         String metadataName = metadata.getName();
         String description = metadata.getDescription();
         String category = toStringOrNull(metadata.getCategory());
         String docLocation = toStringOrNull(metadata.getDocLocation());
-        answer = new CommandInfoDTO(metadataName, description, category, docLocation);
+        boolean enabled = command.isEnabled(context);
+        answer = new CommandInfoDTO(metadataName, description, category, docLocation, enabled);
         return answer;
     }
 
