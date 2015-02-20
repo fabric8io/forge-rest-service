@@ -21,13 +21,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CommandInfoDTO {
+    private final String id;
     private final String name;
     private final String description;
     private final String category;
     private final String docLocation;
     private final boolean enabled;
 
-    public CommandInfoDTO(String name, String description, String category, String docLocation, boolean enabled) {
+    public CommandInfoDTO(String id, String name, String description, String category, String docLocation, boolean enabled) {
+        this.id = id;
         this.name = name;
         this.description = description;
         this.category = category;
@@ -43,6 +45,10 @@ public class CommandInfoDTO {
                 ", description='" + description + '\'' +
                 ", docLocation='" + docLocation + '\'' +
                 '}';
+    }
+
+    public String getId() {
+        return id;
     }
 
     public String getCategory() {

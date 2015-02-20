@@ -26,12 +26,14 @@ import org.jboss.forge.addon.ui.facets.HintsFacet;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.SelectComponent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
+import org.jboss.forge.addon.ui.util.Commands;
 import org.jboss.forge.rest.ui.RestUIContext;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static org.jboss.forge.rest.dto.JsonSchemaTypes.getJsonSchemaTypeName;
 
@@ -42,11 +44,12 @@ public class UICommands {
         CommandInfoDTO answer;
         UICommandMetadata metadata = command.getMetadata(context);
         String metadataName = metadata.getName();
+        String id = shellifyName(metadataName);
         String description = metadata.getDescription();
         String category = toStringOrNull(metadata.getCategory());
         String docLocation = toStringOrNull(metadata.getDocLocation());
         boolean enabled = command.isEnabled(context);
-        answer = new CommandInfoDTO(metadataName, description, category, docLocation, enabled);
+        answer = new CommandInfoDTO(id, metadataName, description, category, docLocation, enabled);
         return answer;
     }
 
@@ -127,4 +130,18 @@ public class UICommands {
             return value.toString();
         }
     }
+
+    private static final Pattern WHITESPACES = Pattern.compile("\\W+");
+    private static final Pattern COLONS = Pattern.compile("\\:");
+
+    /**
+     * "Shellifies" a name (that is, makes the name shell-friendly) by replacing spaces with "-" and removing colons
+     *
+     * @param name
+     * @return
+     */
+    public static String shellifyName(String name) {
+       return COLONS.matcher(WHITESPACES.matcher(name.trim()).replaceAll("-")).replaceAll("").toLowerCase();
+    }
+
 }
