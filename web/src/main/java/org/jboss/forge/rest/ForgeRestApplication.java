@@ -17,12 +17,16 @@ public class ForgeRestApplication extends Application {
     @Inject
     ForgeCommandsResource forgeResource;
 
+    @Inject
+    ProjectsResource projectsResource;
+
     @Override
     public Set<Object> getSingletons() {
         return new HashSet<Object>(
                 Arrays.asList(
                         rootResource,
                         forgeResource,
+                        projectsResource,
                         new JacksonJsonProvider()
                 )
         );

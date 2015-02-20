@@ -5,6 +5,7 @@ import org.apache.cxf.feature.LoggingFeature;
 
 import javax.inject.Inject;
 import javax.ws.rs.ApplicationPath;
+import javax.ws.rs.GET;
 import javax.ws.rs.core.Application;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -21,12 +22,16 @@ public class ForgeRestApplication extends Application {
     @Inject
     ForgeCommandsResource forgeResource;
 
+    @Inject
+    ProjectsResource projectsResource;
+
     @Override
     public Set<Object> getSingletons() {
         return new HashSet<Object>(
                 Arrays.asList(
                         rootResource,
                         forgeResource,
+                        projectsResource,
                         new JacksonJsonProvider(),
 /*
                         new SwaggerFeature(),

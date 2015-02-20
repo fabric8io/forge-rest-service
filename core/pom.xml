@@ -70,5 +70,10 @@
       <artifactId>fabric-utils</artifactId>
       <version>${fabric8.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.deltaspike.core</groupId>
+      <artifactId>deltaspike-core-api</artifactId>
+      <version>${deltaspike.version}</version>
+    </dependency>
   </dependencies>
 </project>

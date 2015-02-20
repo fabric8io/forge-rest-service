@@ -37,31 +37,29 @@
           <failOnMissingWebXml>false</failOnMissingWebXml>
         </configuration>
       </plugin>
-      <!--
-            TODO this fails for me so temporary disabled...
 
-            <plugin>
-              <groupId>org.jboss.forge.furnace</groupId>
-              <artifactId>furnace-maven-plugin</artifactId>
-              <version>${furnace.version}</version>
-              <executions>
-                <execution>
-                  <id>deploy-addons</id>
-                  <phase>test-compile</phase>
-                  <goals>
-                    <goal>addon-install</goal>
-                  </goals>
-                  <inherited>false</inherited>
-                  <configuration>
-                    <addonRepository>${project.build.directory}/${project.artifactId}/WEB-INF/addon-repository</addonRepository>
-                    <addonIds>
-                      <addonId>org.jboss.forge.addon:core,${furnace.version}</addonId>
-                    </addonIds>
-                  </configuration>
-                </execution>
-              </executions>
-            </plugin>
-      -->
+      <plugin>
+        <groupId>org.jboss.forge.furnace</groupId>
+        <artifactId>furnace-maven-plugin</artifactId>
+        <version>${furnace.version}</version>
+        <executions>
+          <execution>
+            <id>deploy-addons</id>
+            <phase>test-compile</phase>
+            <goals>
+              <goal>addon-install</goal>
+            </goals>
+            <inherited>false</inherited>
+            <configuration>
+              <addonRepository>${project.build.directory}/${project.artifactId}/WEB-INF/addon-repository
+              </addonRepository>
+              <addonIds>
+                <addonId>org.jboss.forge.addon:core,${furnace.version}</addonId>
+              </addonIds>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 </project>

@@ -14,15 +14,16 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.target>1.7</maven.compiler.target>
 
+    <deltaspike.version>1.0.3</deltaspike.version>
     <fabric8.version>2.0.27</fabric8.version>
     <jackson.version>2.4.1</jackson.version>
 
     <!--
     lets use the same version as is available in eclipse for now...
 
-    <furnace.version>2.14.0.Final</furnace.version>
-    -->
     <furnace.version>2.13.0.Final</furnace.version>
+    -->
+    <furnace.version>2.14.0.Final</furnace.version>
   </properties>
 
   <dependencyManagement>
@@ -34,6 +35,15 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+<!--
+      <dependency>
+        <groupId>io.fabric8</groupId>
+        <artifactId>fabric8-project</artifactId>
+        <version>${fabric8.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+-->
       <dependency>
         <groupId>javax</groupId>
         <artifactId>javaee-api</artifactId>
