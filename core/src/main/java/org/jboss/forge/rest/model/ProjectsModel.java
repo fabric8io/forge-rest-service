@@ -18,8 +18,11 @@
 package org.jboss.forge.rest.model;
 
 import io.fabric8.utils.Objects;
+import io.fabric8.utils.Strings;
 import org.apache.deltaspike.core.api.config.ConfigProperty;
 import org.jboss.forge.rest.dto.ProjectDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -33,6 +36,8 @@ import java.util.List;
  */
 @Singleton
 public class ProjectsModel {
+    private static final transient Logger LOG = LoggerFactory.getLogger(ProjectsModel.class);
+
     private final File projectsDir;
     private final File projectsFile;
     private List<ProjectDTO> projects;
@@ -58,9 +63,15 @@ public class ProjectsModel {
     }
 
     public ProjectDTO findByPath(String path) {
-        for (ProjectDTO project : projects) {
-            if (Objects.equal(path, project.getPath())) {
-                return project;
+        if (Strings.isNotBlank(path)) {
+            for (ProjectDTO project : projects) {
+                if (Objects.equal(path, project.getPath())) {
+                    return project;
+                }
+            }
+            // we may not have the starting slash if we're using URI templates with the path inside
+            if (!path.startsWith("/")) {
+                return findByPath("/" + path);
             }
         }
         return null;
@@ -79,8 +90,17 @@ public class ProjectsModel {
     }
 
     public void remove(ProjectDTO element) throws IOException {
-        if (projects.remove(element)) {
-            save(projects);
+        String path = element.getPath();
+        ProjectDTO deleteElement = findByPath(path);
+        if (deleteElement != null) {
+            if (projects.remove(deleteElement)) {
+                save(projects);
+                LOG.info("Removed project " + deleteElement);
+            } else {
+                LOG.warn("Could not find project: " + element);
+            }
+        } else {
+            LOG.warn("No project for path: " + path);
         }
     }
 
@@ -88,6 +108,8 @@ public class ProjectsModel {
         ProjectDTO project = findByPath(path);
         if (project != null) {
             remove(project);
+        } else {
+            LOG.warn("Could not find a project for path: " + path);
         }
     }
 

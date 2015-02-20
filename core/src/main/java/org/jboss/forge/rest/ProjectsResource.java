@@ -26,6 +26,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
@@ -58,13 +59,13 @@ public class ProjectsResource {
 
     @DELETE
     @Path("{path: .+}")
-    public void removeProject(String path) throws IOException {
+    public void removeProject(@PathParam("path") String path) throws IOException {
         projectsModel.remove(path);
     }
 
     @GET
     @Path("{path: .+}")
-    public ProjectDTO getProject(String path) throws IOException {
+    public ProjectDTO getProject(@PathParam("path") String path) throws IOException {
         return projectsModel.findByPath(path);
     }
 }
