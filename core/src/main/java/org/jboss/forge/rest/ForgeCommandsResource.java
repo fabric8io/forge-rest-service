@@ -168,7 +168,7 @@ public class ForgeCommandsResource {
     }
 
     @POST
-    @Path("/commands/{name}")
+    @Path("/command/{name}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response executeCommand(@PathParam("name") String name, ExecutionRequest executionRequest) throws Exception {
