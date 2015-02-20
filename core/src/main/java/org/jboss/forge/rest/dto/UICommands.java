@@ -17,6 +17,7 @@
  */
 package org.jboss.forge.rest.dto;
 
+import io.fabric8.utils.Strings;
 import org.jboss.forge.addon.projects.ProjectProvider;
 import org.jboss.forge.addon.projects.ProjectType;
 import org.jboss.forge.addon.projects.ui.AbstractProjectCommand;
@@ -35,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import static org.jboss.forge.furnace.util.Strings.capitalize;
 import static org.jboss.forge.rest.dto.JsonSchemaTypes.getJsonSchemaTypeName;
 
 /**
@@ -43,7 +45,7 @@ public class UICommands {
     public static CommandInfoDTO createCommandInfoDTO(RestUIContext context, UICommand command) {
         CommandInfoDTO answer;
         UICommandMetadata metadata = command.getMetadata(context);
-        String metadataName = metadata.getName();
+        String metadataName = unshellifyName(metadata.getName());
         String id = shellifyName(metadataName);
         String description = metadata.getDescription();
         String category = toStringOrNull(metadata.getCategory());
@@ -52,6 +54,7 @@ public class UICommands {
         answer = new CommandInfoDTO(id, metadataName, description, category, docLocation, enabled);
         return answer;
     }
+
 
     public static CommandInputDTO createCommandInputDTO(RestUIContext context, UICommand command, CommandController controller) throws Exception {
         CommandInfoDTO info = createCommandInfoDTO(context, command);
@@ -144,4 +147,28 @@ public class UICommands {
        return COLONS.matcher(WHITESPACES.matcher(name.trim()).replaceAll("-")).replaceAll("").toLowerCase();
     }
 
+
+    /**
+     * A name of the form "foo-bar-whatnot" is turned into "Foo: Bar Whatnot"
+     */
+    public static String unshellifyName(String name) {
+        if (Strings.isNotBlank(name)) {
+            if (name.indexOf('-') >= 0 && name.toLowerCase().equals(name)) {
+                String[] split = name.split("-");
+                StringBuffer buffer = new StringBuffer();
+                int idx = 0;
+                for (String part : split) {
+                    if (idx == 1) {
+                        buffer.append(": ");
+                    } else if (idx > 1) {
+                        buffer.append(" ");
+                    }
+                    buffer.append(capitalize(part));
+                    idx++;
+                }
+                return buffer.toString();
+            }
+        }
+        return name;
+    }
 }
