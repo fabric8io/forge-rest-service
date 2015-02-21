@@ -20,14 +20,14 @@ package org.jboss.forge.rest.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CommandInputDTO {
     private final CommandInfoDTO info;
-    private Map<String,PropertyDTO> properties = new HashMap<>();
+    private Map<String,PropertyDTO> properties = new LinkedHashMap<>();
     private List<String> required = new ArrayList<>();
 
     public CommandInputDTO(CommandInfoDTO info) {
