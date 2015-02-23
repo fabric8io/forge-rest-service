@@ -5,7 +5,6 @@ import org.apache.cxf.feature.LoggingFeature;
 
 import javax.inject.Inject;
 import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.GET;
 import javax.ws.rs.core.Application;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -20,7 +19,7 @@ public class ForgeRestApplication extends Application {
     RootResource rootResource;
 
     @Inject
-    ForgeCommandsResource forgeResource;
+    CommandsResource forgeResource;
 
     @Inject
     ProjectsResource projectsResource;

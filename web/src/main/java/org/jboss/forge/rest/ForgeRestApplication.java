@@ -15,7 +15,7 @@ public class ForgeRestApplication extends Application {
     RootResource rootResource;
 
     @Inject
-    ForgeCommandsResource forgeResource;
+    CommandsResource forgeResource;
 
     @Inject
     ProjectsResource projectsResource;

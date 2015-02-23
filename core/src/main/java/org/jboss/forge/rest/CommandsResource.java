@@ -46,8 +46,8 @@ import static org.jboss.forge.rest.dto.UIMessageDTO.toDtoList;
 
 @Path("/api/forge")
 @Stateless
-public class ForgeCommandsResource {
-    private static final transient Logger LOG = LoggerFactory.getLogger(ForgeCommandsResource.class);
+public class CommandsResource {
+    private static final transient Logger LOG = LoggerFactory.getLogger(CommandsResource.class);
 
     @Inject
     private Furnace furnace;
