@@ -14,20 +14,20 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 
  * @author <a href="ggastald@redhat.com">George Gastaldi</a>
  */
 @XmlRootElement
-public class ExecutionRequest
-{
-   @XmlElement
-   private String resource;
+public class ExecutionRequest {
+    @XmlElement
+    private String resource;
 
-   @XmlElementWrapper
-   private Map<String, String> inputs;
+    @XmlElementWrapper
+    private Map<String, String> inputs;
 
-   @XmlElementWrapper
-   private List<String> promptQueue;
+    @XmlElementWrapper
+    private List<String> promptQueue;
+
+    private Integer wizardStep;
 
     @Override
     public String toString() {
@@ -39,34 +39,49 @@ public class ExecutionRequest
     }
 
     /**
-    * @return the inputs
-    */
-   public Map<String, String> getInputs()
-   {
-      return inputs;
-   }
+     * @return the inputs
+     */
+    public Map<String, String> getInputs() {
+        return inputs;
+    }
 
-   /**
-    * @param inputs the inputs to set
-    */
-   public void setInputs(Map<String, String> inputs)
-   {
-      this.inputs = inputs;
-   }
+    /**
+     * @param inputs the inputs to set
+     */
+    public void setInputs(Map<String, String> inputs) {
+        this.inputs = inputs;
+    }
 
-   /**
-    * @return the resource
-    */
-   public String getResource()
-   {
-      return resource;
-   }
+    /**
+     * @return the resource
+     */
+    public String getResource() {
+        return resource;
+    }
 
-   /**
-    * @param resource the resource to set
-    */
-   public void setResource(String resource)
-   {
-      this.resource = resource;
-   }
+    /**
+     * @param resource the resource to set
+     */
+    public void setResource(String resource) {
+        this.resource = resource;
+    }
+
+    public Integer getWizardStep() {
+        return wizardStep;
+    }
+
+    public void setWizardStep(Integer wizardStep) {
+        this.wizardStep = wizardStep;
+    }
+
+    /**
+     * Returns the wizard step number or 0 if one is not defined
+     */
+    public int wizardStep() {
+        if (wizardStep != null) {
+            return wizardStep.intValue();
+        } else {
+            return 0;
+        }
+    }
 }

@@ -8,7 +8,7 @@ import org.jboss.forge.addon.ui.command.UICommand;
 import org.jboss.forge.addon.ui.controller.CommandController;
 import org.jboss.forge.addon.ui.controller.CommandControllerFactory;
 import org.jboss.forge.addon.ui.controller.WizardCommandController;
-import org.jboss.forge.addon.ui.input.InputComponent;
+import org.jboss.forge.addon.ui.output.UIMessage;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.furnace.Furnace;
 import org.jboss.forge.furnace.addons.AddonRegistry;
@@ -17,8 +17,9 @@ import org.jboss.forge.rest.dto.CommandInfoDTO;
 import org.jboss.forge.rest.dto.CommandInputDTO;
 import org.jboss.forge.rest.dto.ExecutionRequest;
 import org.jboss.forge.rest.dto.ExecutionResult;
-import org.jboss.forge.rest.dto.ExecutionStatus;
 import org.jboss.forge.rest.dto.UICommands;
+import org.jboss.forge.rest.dto.ValidationResult;
+import org.jboss.forge.rest.dto.WizardResultsDTO;
 import org.jboss.forge.rest.ui.RestUIContext;
 import org.jboss.forge.rest.ui.RestUIProvider;
 import org.jboss.forge.rest.ui.RestUIRuntime;
@@ -38,12 +39,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import static org.jboss.forge.rest.dto.UICommands.createCommandInputDTO;
+import static org.jboss.forge.rest.dto.UIMessageDTO.toDtoList;
 
 @Path("/api/forge")
 @Stateless
@@ -133,7 +132,6 @@ public class ForgeCommandsResource {
     @Path("/commandInput/{name}/{path: .*}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getCommandInput(@PathParam("name") String name, @PathParam("path") String resourcePath) throws Exception {
-        System.out.println("Command " + name + " path: " + resourcePath);
         try {
             CommandInputDTO answer = null;
             try (RestUIContext context = createUIContext(resourcePath)) {
@@ -154,6 +152,140 @@ public class ForgeCommandsResource {
         }
     }
 
+
+    @POST
+    @Path("/command/execute/{name}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response executeCommand(@PathParam("name") String name, ExecutionRequest executionRequest) throws Exception {
+        try {
+            String resourcePath = executionRequest.getResource();
+            try (RestUIContext context = createUIContext(resourcePath)) {
+                UICommand command = getCommandByName(context, name);
+                if (command == null) {
+                    return Response.status(Status.NOT_FOUND).build();
+                }
+                CommandController controller = createController(context, command);
+                ExecutionResult answer = null;
+                if (controller instanceof WizardCommandController) {
+                    WizardCommandController wizardCommandController = (WizardCommandController) controller;
+                    List<WizardCommandController> controllers = new ArrayList<>();
+                    List<CommandInputDTO> stepInputs = new ArrayList<>();
+                    List<ExecutionResult> stepResultList = new ArrayList<>();
+                    List<ValidationResult> stepValidationList = new ArrayList<>();
+                    controllers.add(wizardCommandController);
+                    WizardCommandController lastController = wizardCommandController;
+                    Result lastResult = null;
+                    int page = executionRequest.wizardStep();
+                    int nextPage = page + 1;
+                    for (int i = 0; i <= nextPage; i++) {
+                        ValidationResult stepValidation = validateController(executionRequest, name, context, lastController);
+                        stepValidationList.add(stepValidation);
+                        if (!stepValidation.isValid()) {
+                            break;
+                        }
+                        boolean canMoveToNextStep = lastController.canMoveToNextStep();
+                        boolean valid = lastController.isValid();
+                        if (!canMoveToNextStep) {
+                            // lets execute now!
+                            UICommands.populateController(executionRequest, lastController);
+                            lastResult = lastController.execute();
+                            LOG.debug("Invoked command " + name + " with " + executionRequest + " result: " + lastResult);
+                            ExecutionResult stepResults = UICommands.createExecutionResult(context, lastResult);
+                            stepResultList.add(stepResults);
+                            break;
+                        } else if (!valid) {
+                            LOG.warn("Cannot move to next step as invalid despite the validation saying otherwise");
+                            break;
+                        }
+                        WizardCommandController nextController = lastController.next();
+                        if (nextController != null) {
+                            if (nextController == lastController) {
+                                LOG.warn("No idea whats going on ;)");
+                                break;
+                            }
+                            lastController = nextController;
+                            lastController.initialize();
+                            controllers.add(lastController);
+                            CommandInputDTO stepDto = createCommandInputDTO(context, command, lastController);
+                            stepInputs.add(stepDto);
+                        } else {
+                            for (WizardCommandController stepController : controllers) {
+                                UICommands.populateController(executionRequest, stepController);
+                                lastResult = stepController.execute();
+                                LOG.debug("Invoked command " + name + " with " + executionRequest + " result: " + lastResult);
+                                ExecutionResult stepResults = UICommands.createExecutionResult(context, lastResult);
+                                stepResultList.add(stepResults);
+                            }
+                            break;
+                        }
+                    }
+                    answer = UICommands.createExecutionResult(context, lastResult);
+                    WizardResultsDTO wizardResultsDTO = new WizardResultsDTO(stepInputs, stepValidationList, stepResultList);
+                    answer.setWizardResults(wizardResultsDTO);
+                } else {
+                    UICommands.populateController(executionRequest, controller);
+                    answer = executeController(context, name, executionRequest, controller);
+                }
+                return Response.ok(answer).build();
+            }
+        } catch (Throwable e) {
+            LOG.warn("Failed to invoke command " + name + " on " + executionRequest + ". " + e, e);
+            throw e;
+        }
+    }
+
+
+    @POST
+    @Path("/command/validate/{name}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response validateCommand(@PathParam("name") String name, ExecutionRequest executionRequest) throws Exception {
+        try {
+            String resourcePath = executionRequest.getResource();
+            try (RestUIContext context = createUIContext(resourcePath)) {
+                UICommand command = getCommandByName(context, name);
+                if (command == null) {
+                    return Response.status(Status.NOT_FOUND).build();
+                }
+                CommandController controller = createController(context, command);
+                ValidationResult answer = null;
+                if (controller instanceof WizardCommandController) {
+                    WizardCommandController wizardCommandController = (WizardCommandController) controller;
+                    LOG.warn("TODO: WizardCommandController " + controller);
+                    //answer = new ExecutionResult(ExecutionStatus.FAILED, "TODO: WizardCommandController not supported yet", "" + controller, null, null);
+                } else {
+                    answer = validateController(executionRequest, name, context, controller);
+                }
+                return Response.ok(answer).build();
+            }
+        } catch (Throwable e) {
+            LOG.warn("Failed to invoke command " + name + " on " + executionRequest + ". " + e, e);
+            throw e;
+        }
+    }
+
+    protected ValidationResult validateController(ExecutionRequest executionRequest, String name, RestUIContext context, CommandController controller) {
+        ValidationResult answer;
+        UICommands.populateController(executionRequest, controller);
+        List<UIMessage> messages = controller.validate();
+        boolean valid = controller.isValid();
+        boolean canExecute = controller.canExecute();
+        LOG.debug("Validate command " + name + " with " + executionRequest + " messages: " + messages);
+
+        RestUIProvider provider = context.getProvider();
+        String out = provider.getOut();
+        String err = provider.getErr();
+        answer = new ValidationResult(toDtoList(messages), valid, canExecute, out, err);
+        return answer;
+    }
+
+    protected ExecutionResult executeController(RestUIContext context, String name, ExecutionRequest executionRequest, CommandController controller) throws Exception {
+        Result result = controller.execute();
+        LOG.debug("Invoked command " + name + " with " + executionRequest + " result: " + result);
+        return UICommands.createExecutionResult(context, result);
+    }
+
     protected CommandInfoDTO createCommandInfoDTO(RestUIContext context, String name) {
         UICommand command = getCommandByName(context, name);
         CommandInfoDTO answer = null;
@@ -165,53 +297,6 @@ public class ForgeCommandsResource {
 
     protected UICommand getCommandByName(RestUIContext context, String name) {
         return commandFactory.getCommandByName(context, name);
-    }
-
-    @POST
-    @Path("/command/{name}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response executeCommand(@PathParam("name") String name, ExecutionRequest executionRequest) throws Exception {
-        try {
-            String resourcePath = executionRequest.getResource();
-            try (RestUIContext context = createUIContext(resourcePath)) {
-
-                UICommand command = getCommandByName(context, name);
-                if (command == null) {
-                    return Response.status(Status.NOT_FOUND).build();
-                }
-                CommandController controller = createController(context, command);
-                Map<String, String> requestedInputs = executionRequest.getInputs();
-                ExecutionResult answer = null;
-                if (controller instanceof WizardCommandController) {
-                    LOG.warn("TODO: WizardCommandController " + controller);
-                    answer = new ExecutionResult(ExecutionStatus.FAILED, "TODO: WizardCommandController not supported yet", "" + controller, null, null);
-                } else {
-                    Map<String, InputComponent<?, ?>> inputs = controller.getInputs();
-                    Set<String> inputKeys = new HashSet<>(inputs.keySet());
-                    if (requestedInputs != null) {
-                        inputKeys.retainAll(requestedInputs.keySet());
-                        for (String key : inputKeys) {
-                            controller.setValueFor(key, requestedInputs.get(key));
-                        }
-                    }
-                    Result result = controller.execute();
-                    LOG.debug("Invoked command " + name + " with " + executionRequest + " result: " + result);
-
-                    RestUIProvider provider = context.getProvider();
-                    String out = provider.getOut();
-                    String err = provider.getErr();
-                    String message = result.getMessage();
-                    String detail = null;
-                    ExecutionStatus status = ExecutionStatus.SUCCESS;
-                    answer = new ExecutionResult(status, message, out, err, detail);
-                }
-                return Response.ok(answer).build();
-            }
-        } catch (Throwable e) {
-            LOG.warn("Failed to invoke command " + name + " on " + executionRequest + ". " + e, e);
-            throw e;
-        }
     }
 
     protected CommandController createController(RestUIContext context, UICommand command) throws Exception {

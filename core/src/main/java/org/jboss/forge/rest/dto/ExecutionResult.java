@@ -6,6 +6,7 @@ public class ExecutionResult {
 	private final String output;
 	private final String err;
     private final String detail;
+    private WizardResultsDTO wizardResults;
 
     public ExecutionResult(ExecutionStatus status, String message, String output, String err, String detail) {
         this.status = status;
@@ -44,5 +45,13 @@ public class ExecutionResult {
 
     public ExecutionStatus getStatus() {
         return status;
+    }
+
+    public void setWizardResults(WizardResultsDTO wizardResults) {
+        this.wizardResults = wizardResults;
+    }
+
+    public WizardResultsDTO getWizardResults() {
+        return wizardResults;
     }
 }

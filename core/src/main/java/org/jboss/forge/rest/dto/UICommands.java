@@ -20,17 +20,17 @@ package org.jboss.forge.rest.dto;
 import io.fabric8.utils.Strings;
 import org.jboss.forge.addon.projects.ProjectProvider;
 import org.jboss.forge.addon.projects.ProjectType;
-import org.jboss.forge.addon.projects.ui.AbstractProjectCommand;
 import org.jboss.forge.addon.ui.command.UICommand;
 import org.jboss.forge.addon.ui.controller.CommandController;
-import org.jboss.forge.addon.ui.facets.HintsFacet;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.SelectComponent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
-import org.jboss.forge.addon.ui.util.Commands;
+import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.rest.ui.RestUIContext;
+import org.jboss.forge.rest.ui.RestUIProvider;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -170,5 +170,27 @@ public class UICommands {
             }
         }
         return name;
+    }
+
+    public static void populateController(ExecutionRequest executionRequest, CommandController controller) {
+        Map<String, String> requestedInputs = executionRequest.getInputs();
+        Map<String, InputComponent<?, ?>> inputs = controller.getInputs();
+        Set<String> inputKeys = new HashSet<>(inputs.keySet());
+        if (requestedInputs != null) {
+            inputKeys.retainAll(requestedInputs.keySet());
+            for (String key : inputKeys) {
+                controller.setValueFor(key, requestedInputs.get(key));
+            }
+        }
+    }
+
+    public static ExecutionResult createExecutionResult(RestUIContext context, Result result) {
+        RestUIProvider provider = context.getProvider();
+        String out = provider.getOut();
+        String err = provider.getErr();
+        String message = result != null ? result.getMessage() : null;
+        String detail = null;
+        ExecutionStatus status = ExecutionStatus.SUCCESS;
+        return new ExecutionResult(status, message, out, err, detail);
     }
 }
