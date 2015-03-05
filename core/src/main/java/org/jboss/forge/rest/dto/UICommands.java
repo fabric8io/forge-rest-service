@@ -207,14 +207,14 @@ public class UICommands {
         }
     }
 
-    public static ExecutionResult createExecutionResult(RestUIContext context, Result result) {
+    public static ExecutionResult createExecutionResult(RestUIContext context, Result result, boolean canMoveToNextStep) {
         RestUIProvider provider = context.getProvider();
         String out = provider.getOut();
         String err = provider.getErr();
         String message = result != null ? getResultMessage(result) : null;
         String detail = null;
         ExecutionStatus status = ExecutionStatus.SUCCESS;
-        return new ExecutionResult(status, message, out, err, detail);
+        return new ExecutionResult(status, message, out, err, detail, canMoveToNextStep);
     }
 
     protected static String getResultMessage(Result result) {

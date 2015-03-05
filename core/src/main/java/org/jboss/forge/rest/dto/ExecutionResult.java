@@ -7,13 +7,15 @@ public class ExecutionResult {
 	private final String err;
     private final String detail;
     private WizardResultsDTO wizardResults;
+    private boolean canMoveToNextStep;
 
-    public ExecutionResult(ExecutionStatus status, String message, String output, String err, String detail) {
+    public ExecutionResult(ExecutionStatus status, String message, String output, String err, String detail, boolean canMoveToNextStep) {
         this.status = status;
         this.message = message;
         this.output = output;
         this.err = err;
         this.detail = detail;
+        this.canMoveToNextStep = canMoveToNextStep;
     }
 
     @Override
@@ -53,5 +55,9 @@ public class ExecutionResult {
 
     public WizardResultsDTO getWizardResults() {
         return wizardResults;
+    }
+
+    public boolean isCanMoveToNextStep() {
+        return canMoveToNextStep;
     }
 }

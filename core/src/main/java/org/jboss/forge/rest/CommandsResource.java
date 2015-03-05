@@ -183,6 +183,7 @@ public class CommandsResource {
                     Result lastResult = null;
                     int page = executionRequest.wizardStep();
                     int nextPage = page + 1;
+                    boolean canMoveToNextStep = false;
                     for (Map<String, String> inputs : inputList) {
                         UICommands.populateController(inputs, lastController, getConverterFactory());
                         ValidationResult stepValidation = controllerValidate(executionRequest, name, context, lastController);
@@ -190,13 +191,13 @@ public class CommandsResource {
                         if (!stepValidation.isValid()) {
                             break;
                         }
-                        boolean canMoveToNextStep = lastController.canMoveToNextStep();
+                        canMoveToNextStep = lastController.canMoveToNextStep();
                         boolean valid = lastController.isValid();
                         if (!canMoveToNextStep) {
                             // lets assume we can execute now
                             lastResult = lastController.execute();
                             LOG.debug("Invoked command " + name + " with " + executionRequest + " result: " + lastResult);
-                            ExecutionResult stepResults = UICommands.createExecutionResult(context, lastResult);
+                            ExecutionResult stepResults = UICommands.createExecutionResult(context, lastResult, false);
                             stepResultList.add(stepResults);
                             break;
                         } else if (!valid) {
@@ -221,13 +222,13 @@ public class CommandsResource {
                                 UICommands.populateController(stepControllerInputs, stepController, getConverterFactory());
                                 lastResult = stepController.execute();
                                 LOG.debug("Invoked command " + name + " with " + executionRequest + " result: " + lastResult);
-                                ExecutionResult stepResults = UICommands.createExecutionResult(context, lastResult);
+                                ExecutionResult stepResults = UICommands.createExecutionResult(context, lastResult, false);
                                 stepResultList.add(stepResults);
                             }
                             break;
                         }
                     }
-                    answer = UICommands.createExecutionResult(context, lastResult);
+                    answer = UICommands.createExecutionResult(context, lastResult, canMoveToNextStep);
                     WizardResultsDTO wizardResultsDTO = new WizardResultsDTO(stepPropertiesList, stepValidationList, stepResultList);
                     answer.setWizardResults(wizardResultsDTO);
                 } else {
@@ -297,7 +298,7 @@ public class CommandsResource {
     protected ExecutionResult executeController(RestUIContext context, String name, ExecutionRequest executionRequest, CommandController controller) throws Exception {
         Result result = controller.execute();
         LOG.debug("Invoked command " + name + " with " + executionRequest + " result: " + result);
-        return UICommands.createExecutionResult(context, result);
+        return UICommands.createExecutionResult(context, result, false);
     }
 
     protected CommandInfoDTO createCommandInfoDTO(RestUIContext context, String name) {
