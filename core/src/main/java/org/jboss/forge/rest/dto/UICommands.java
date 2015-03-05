@@ -18,6 +18,8 @@
 package org.jboss.forge.rest.dto;
 
 import io.fabric8.utils.Strings;
+import org.jboss.forge.addon.convert.Converter;
+import org.jboss.forge.addon.convert.ConverterFactory;
 import org.jboss.forge.addon.projects.ProjectProvider;
 import org.jboss.forge.addon.projects.ProjectType;
 import org.jboss.forge.addon.ui.command.UICommand;
@@ -25,7 +27,9 @@ import org.jboss.forge.addon.ui.controller.CommandController;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.SelectComponent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
+import org.jboss.forge.addon.ui.result.CompositeResult;
 import org.jboss.forge.addon.ui.result.Result;
+import org.jboss.forge.addon.ui.util.InputComponents;
 import org.jboss.forge.rest.ui.RestUIContext;
 import org.jboss.forge.rest.ui.RestUIProvider;
 
@@ -172,14 +176,33 @@ public class UICommands {
         return name;
     }
 
-    public static void populateController(ExecutionRequest executionRequest, CommandController controller) {
-        Map<String, String> requestedInputs = executionRequest.getInputs();
+    public static void populateController(Map<String, String> requestedInputs, CommandController controller, ConverterFactory converterFactory) {
         Map<String, InputComponent<?, ?>> inputs = controller.getInputs();
         Set<String> inputKeys = new HashSet<>(inputs.keySet());
         if (requestedInputs != null) {
             inputKeys.retainAll(requestedInputs.keySet());
             for (String key : inputKeys) {
-                controller.setValueFor(key, requestedInputs.get(key));
+                String textValue = requestedInputs.get(key);
+                Object value = textValue;
+                InputComponent<?, ?> component = inputs.get(key);
+                if (component != null) {
+                    Converter<String, ?> valueConverter = component.getValueConverter();
+                    if (valueConverter != null) {
+                        value = valueConverter.convert(textValue);
+                    } else {
+                        Class<?> valueType = component.getValueType();
+                        if (valueType.isEnum()) {
+                            Class<? extends Enum> enumType = (Class<? extends Enum>) valueType;
+                            value = Enum.valueOf(enumType, textValue);
+                        }
+                    }
+                    InputComponents.setValueFor(converterFactory, component, value);
+                } else {
+                    controller.setValueFor(key, value);
+                }
+
+                Object actual = controller.getValueFor(key);
+                System.out.println("=== " + key + " = " + actual + " Class: " + (actual != null ? actual.getClass().getName() : "null"));
             }
         }
     }
@@ -188,9 +211,29 @@ public class UICommands {
         RestUIProvider provider = context.getProvider();
         String out = provider.getOut();
         String err = provider.getErr();
-        String message = result != null ? result.getMessage() : null;
+        String message = result != null ? getResultMessage(result) : null;
         String detail = null;
         ExecutionStatus status = ExecutionStatus.SUCCESS;
         return new ExecutionResult(status, message, out, err, detail);
+    }
+
+    protected static String getResultMessage(Result result) {
+        if (result instanceof CompositeResult) {
+            CompositeResult compositeResult = (CompositeResult) result;
+            List<Result> results = compositeResult.getResults();
+            StringBuilder buffer = new StringBuilder();
+            for (Result childResult : results) {
+                String childResultMessage = getResultMessage(childResult);
+                if (Strings.isNotBlank(childResultMessage)) {
+                    if (buffer.length() > 0) {
+                        buffer.append("\n");
+                    }
+                    buffer.append(childResultMessage);
+                }
+            }
+            return buffer.toString();
+        } else {
+            return result.getMessage();
+        }
     }
 }

@@ -58,6 +58,7 @@
                                 <addonId>org.jboss.forge.addon:core,${furnace.version}</addonId>
                 -->
                 <addonId>io.fabric8.forge:camel,2.2-SNAPSHOT</addonId>
+                <addonId>org.jboss.forge.addon:git,${furnace.version}</addonId>
               </addonIds>
             </configuration>
           </execution>

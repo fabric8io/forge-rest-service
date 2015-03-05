@@ -1,6 +1,7 @@
 package org.jboss.forge.rest;
 
 import io.fabric8.utils.Strings;
+import org.jboss.forge.addon.convert.ConverterFactory;
 import org.jboss.forge.addon.resource.Resource;
 import org.jboss.forge.addon.resource.ResourceFactory;
 import org.jboss.forge.addon.ui.command.CommandFactory;
@@ -40,6 +41,7 @@ import javax.ws.rs.core.Response.Status;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.jboss.forge.rest.dto.UICommands.createCommandInputDTO;
 import static org.jboss.forge.rest.dto.UIMessageDTO.toDtoList;
@@ -57,6 +59,8 @@ public class CommandsResource {
 
     @Inject
     private CommandFactory commandFactory;
+
+    private ConverterFactory converterFactory;
 
     @GET
     public String getInfo() {
@@ -165,12 +169,13 @@ public class CommandsResource {
                 if (command == null) {
                     return Response.status(Status.NOT_FOUND).build();
                 }
+                List<Map<String, String>> inputList = executionRequest.getInputList();
                 CommandController controller = createController(context, command);
                 ExecutionResult answer = null;
                 if (controller instanceof WizardCommandController) {
                     WizardCommandController wizardCommandController = (WizardCommandController) controller;
                     List<WizardCommandController> controllers = new ArrayList<>();
-                    List<CommandInputDTO> stepInputs = new ArrayList<>();
+                    List<CommandInputDTO> stepPropertiesList = new ArrayList<>();
                     List<ExecutionResult> stepResultList = new ArrayList<>();
                     List<ValidationResult> stepValidationList = new ArrayList<>();
                     controllers.add(wizardCommandController);
@@ -178,8 +183,9 @@ public class CommandsResource {
                     Result lastResult = null;
                     int page = executionRequest.wizardStep();
                     int nextPage = page + 1;
-                    for (int i = 0; i <= nextPage; i++) {
-                        ValidationResult stepValidation = validateController(executionRequest, name, context, lastController);
+                    for (Map<String, String> inputs : inputList) {
+                        UICommands.populateController(inputs, lastController, getConverterFactory());
+                        ValidationResult stepValidation = controllerValidate(executionRequest, name, context, lastController);
                         stepValidationList.add(stepValidation);
                         if (!stepValidation.isValid()) {
                             break;
@@ -187,8 +193,7 @@ public class CommandsResource {
                         boolean canMoveToNextStep = lastController.canMoveToNextStep();
                         boolean valid = lastController.isValid();
                         if (!canMoveToNextStep) {
-                            // lets execute now!
-                            UICommands.populateController(executionRequest, lastController);
+                            // lets assume we can execute now
                             lastResult = lastController.execute();
                             LOG.debug("Invoked command " + name + " with " + executionRequest + " result: " + lastResult);
                             ExecutionResult stepResults = UICommands.createExecutionResult(context, lastResult);
@@ -208,10 +213,12 @@ public class CommandsResource {
                             lastController.initialize();
                             controllers.add(lastController);
                             CommandInputDTO stepDto = createCommandInputDTO(context, command, lastController);
-                            stepInputs.add(stepDto);
+                            stepPropertiesList.add(stepDto);
                         } else {
+                            int i = 0;
                             for (WizardCommandController stepController : controllers) {
-                                UICommands.populateController(executionRequest, stepController);
+                                Map<String, String> stepControllerInputs = inputList.get(i++);
+                                UICommands.populateController(stepControllerInputs, stepController, getConverterFactory());
                                 lastResult = stepController.execute();
                                 LOG.debug("Invoked command " + name + " with " + executionRequest + " result: " + lastResult);
                                 ExecutionResult stepResults = UICommands.createExecutionResult(context, lastResult);
@@ -221,10 +228,11 @@ public class CommandsResource {
                         }
                     }
                     answer = UICommands.createExecutionResult(context, lastResult);
-                    WizardResultsDTO wizardResultsDTO = new WizardResultsDTO(stepInputs, stepValidationList, stepResultList);
+                    WizardResultsDTO wizardResultsDTO = new WizardResultsDTO(stepPropertiesList, stepValidationList, stepResultList);
                     answer.setWizardResults(wizardResultsDTO);
                 } else {
-                    UICommands.populateController(executionRequest, controller);
+                    Map<String, String> inputs = inputList.get(0);
+                    UICommands.populateController(inputs, controller, getConverterFactory());
                     answer = executeController(context, name, executionRequest, controller);
                 }
                 return Response.ok(answer).build();
@@ -248,14 +256,21 @@ public class CommandsResource {
                 if (command == null) {
                     return Response.status(Status.NOT_FOUND).build();
                 }
+                List<ValidationResult> answer = new ArrayList<>();
                 CommandController controller = createController(context, command);
-                ValidationResult answer = null;
                 if (controller instanceof WizardCommandController) {
                     WizardCommandController wizardCommandController = (WizardCommandController) controller;
                     LOG.warn("TODO: WizardCommandController " + controller);
                     //answer = new ExecutionResult(ExecutionStatus.FAILED, "TODO: WizardCommandController not supported yet", "" + controller, null, null);
                 } else {
-                    answer = validateController(executionRequest, name, context, controller);
+                    List<Map<String, String>> inputList = executionRequest.getInputList();
+                    for (Map<String, String> inputs : inputList) {
+                        UICommands.populateController(inputs, controller, getConverterFactory());
+                        ValidationResult result = controllerValidate(executionRequest, name, context, controller);
+                        if (result != null) {
+                            answer.add(result);
+                        }
+                    }
                 }
                 return Response.ok(answer).build();
             }
@@ -265,9 +280,8 @@ public class CommandsResource {
         }
     }
 
-    protected ValidationResult validateController(ExecutionRequest executionRequest, String name, RestUIContext context, CommandController controller) {
+    protected static ValidationResult controllerValidate(ExecutionRequest executionRequest, String name, RestUIContext context, CommandController controller) {
         ValidationResult answer;
-        UICommands.populateController(executionRequest, controller);
         List<UIMessage> messages = controller.validate();
         boolean valid = controller.isValid();
         boolean canExecute = controller.canExecute();
@@ -327,4 +341,18 @@ public class CommandsResource {
         return new RestUIContext(selection);
     }
 
+    public ConverterFactory getConverterFactory() {
+        if (converterFactory == null) {
+            AddonRegistry addonRegistry = furnace.getAddonRegistry();
+            Imported<ConverterFactory> converterFactoryImport = addonRegistry.getServices(ConverterFactory.class);
+            converterFactory = converterFactoryImport.get();
+            System.out.println("======== loaded converter factory: " + converterFactory);
+
+        }
+        return converterFactory;
+    }
+
+    public void setConverterFactory(ConverterFactory converterFactory) {
+        this.converterFactory = converterFactory;
+    }
 }

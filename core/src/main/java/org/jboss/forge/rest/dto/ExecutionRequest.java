@@ -22,7 +22,7 @@ public class ExecutionRequest {
     private String resource;
 
     @XmlElementWrapper
-    private Map<String, String> inputs;
+    private List<Map<String, String>> inputList;
 
     @XmlElementWrapper
     private List<String> promptQueue;
@@ -33,23 +33,17 @@ public class ExecutionRequest {
     public String toString() {
         return "ExecutionRequest{" +
                 "resource='" + resource + '\'' +
-                ", inputs=" + inputs +
+                ", inputs=" + inputList +
                 ", promptQueue=" + promptQueue +
                 '}';
     }
 
-    /**
-     * @return the inputs
-     */
-    public Map<String, String> getInputs() {
-        return inputs;
+    public List<Map<String, String>> getInputList() {
+        return inputList;
     }
 
-    /**
-     * @param inputs the inputs to set
-     */
-    public void setInputs(Map<String, String> inputs) {
-        this.inputs = inputs;
+    public void setInputList(List<Map<String, String>> inputList) {
+        this.inputList = inputList;
     }
 
     /**

@@ -20,7 +20,7 @@ public class RestUIProvider implements UIProvider {
 
 	@Override
 	public boolean isGUI() {
-		return false;
+		return true;
 	}
 
 	@Override
