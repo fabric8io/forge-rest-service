@@ -94,9 +94,13 @@ public class CommandsResource {
         List<CommandInfoDTO> answer = new ArrayList<>();
         try (RestUIContext context = createUIContext(resourcePath)) {
             for (String name : commandFactory.getCommandNames(context)) {
-                CommandInfoDTO dto = createCommandInfoDTO(context, name);
-                if (dto != null && dto.isEnabled()) {
-                    answer.add(dto);
+                try {
+                    CommandInfoDTO dto = createCommandInfoDTO(context, name);
+                    if (dto != null && dto.isEnabled()) {
+                        answer.add(dto);
+                    }
+                } catch (Exception e) {
+                    LOG.warn("Ignored exception on command " + name + " probably due to missing project?: " + e, e);
                 }
             }
         }
