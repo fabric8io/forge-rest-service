@@ -20,7 +20,7 @@
     <jackson.version>2.4.1</jackson.version>
     <junit.version>4.11</junit.version>
 
-    <furnace.version>2.15.0.Final</furnace.version>
+    <furnace.version>2.15.1.Final</furnace.version>
   </properties>
 
   <dependencyManagement>
