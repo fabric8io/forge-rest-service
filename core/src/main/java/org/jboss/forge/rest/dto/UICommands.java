@@ -87,11 +87,7 @@ public class UICommands {
         String requiredMessage = input.getRequiredMessage();
         char shortNameChar = input.getShortName();
         String shortName = Character.toString(shortNameChar);
-        Object value = input.getValue();
-        if (value != null) {
-            // lets make a safe way to turn to JSON
-            value = toSafeJsonValue(value);
-        }
+        Object value = convertValueToSafeJson(input.getValueConverter(), InputComponents.getValueFor(input));
         Class<?> valueType = input.getValueType();
         String javaType = null;
         if (valueType != null) {
@@ -104,8 +100,9 @@ public class UICommands {
         if (input instanceof SelectComponent) {
             SelectComponent selectComponent = (SelectComponent) input;
             Iterable valueChoices = selectComponent.getValueChoices();
+            Converter converter = selectComponent.getItemLabelConverter();
             for (Object valueChoice : valueChoices) {
-                Object jsonValue = toSafeJsonValue(valueChoice);
+                Object jsonValue = convertValueToSafeJson(converter, valueChoice);
                 enumValues.add(jsonValue);
             }
 
@@ -114,6 +111,23 @@ public class UICommands {
             enumValues = null;
         }
         return new PropertyDTO(name, description, label, requiredMessage, value, javaType, type, enabled, required, enumValues);
+    }
+
+    /**
+     * Uses the given converter to convert to a nicer UI value and return the JSON safe version
+     */
+    public static Object convertValueToSafeJson(Converter converter, Object value) {
+        if (converter != null) {
+            Object converted = converter.convert(value);
+            if (converted != null) {
+                value = converted;
+            }
+        }
+        if (value != null) {
+            return toSafeJsonValue(value);
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -126,6 +140,7 @@ public class UICommands {
             if (value instanceof Number) {
                 return value;
             }
+
             if (value instanceof ProjectProvider) {
                 ProjectProvider projectProvider = (ProjectProvider) value;
                 return projectProvider.getType();
@@ -137,6 +152,7 @@ public class UICommands {
             return value.toString();
         }
     }
+
 
     private static final Pattern WHITESPACES = Pattern.compile("\\W+");
     private static final Pattern COLONS = Pattern.compile("\\:");
