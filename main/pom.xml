@@ -30,12 +30,7 @@
     <dependency>
       <groupId>io.fabric8.quickstarts</groupId>
       <artifactId>rest-utils</artifactId>
-      <version>2.0.31</version>
-<!--
-      TODO switch back when quickstarts are released
-
       <version>${fabric8.version}</version>
--->
     </dependency>
 
     <dependency>

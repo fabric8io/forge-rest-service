@@ -20,11 +20,7 @@ import io.fabric8.rest.utils.Servers;
 public class Main {
 
     public static void main(final String[] args) throws Exception {
-        // lets set a default port
-        if (System.getProperty("HTTP_PORT") == null) {
-            System.setProperty("HTTP_PORT", "8599");
-        }
-        Servers.startServer("Forge REST API").join();
+        Servers.startServer("Forge REST API", null, "8599").join();
     }
 
 }

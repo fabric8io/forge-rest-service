@@ -17,10 +17,19 @@
  */
 package org.jboss.forge.rest.main;
 
+import io.fabric8.cdi.annotations.Service;
+import io.fabric8.utils.Files;
+import org.apache.deltaspike.core.api.config.ConfigProperty;
+import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.InitCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.jboss.forge.addon.ui.controller.CommandController;
 import org.jboss.forge.furnace.util.Strings;
 import org.jboss.forge.rest.dto.ExecutionRequest;
@@ -33,11 +42,8 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
-import org.apache.deltaspike.core.api.config.ConfigProperty;
-import io.fabric8.cdi.annotations.Service;
 
 /**
  * For new projects; lets git add, git commit, git push otherwise lets git add/commit/push any new/udpated changes
@@ -46,10 +52,10 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
     private static final transient Logger LOG = LoggerFactory.getLogger(GitCommandCompletePostProcessor.class);
     private final String gitUser;
     private final String gitPassword;
-    private final URL gogsUrl;
+    private final String gogsUrl;
 
     @Inject
-    public GitCommandCompletePostProcessor(@Service("GOGS_HTTP_SERVICE") URL gogsUrl,
+    public GitCommandCompletePostProcessor(@Service("GOGS_HTTP_SERVICE") String gogsUrl,
                                            @ConfigProperty(name = "GIT_DEFAULT_USER") String gitUser,
                                            @ConfigProperty(name = "GIT_DEFAULT_PASSWORD") String gitPassword) {
         this.gogsUrl = gogsUrl;
@@ -89,15 +95,26 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
                         LOG.info("Initialised an empty git configuration repo at {}", basedir.getAbsolutePath());
 
                         String remote = gogsUrl.toString();
+                        int idx = remote.indexOf("://");
+                        if (idx > 0) {
+                            remote = "http" + remote.substring(idx);
+                        }
                         if (!remote.endsWith("/")) {
                             remote += "/" + gitUser + "/" + named + ".git";
                         }
                         LOG.info("Using remote: " + remote);
                         String branch = "master";
                         configureBranch(git, branch, remote);
-                        doAddCommitAndPushFiles(git);
-                    } catch (GitAPIException e) {
-                        handleGitException(e);
+
+                        // TODO take these from the request?
+                        String authorEmail = "dummy@gmail.com";
+
+                        CredentialsProvider credentials = new UsernamePasswordCredentialsProvider(gitUser, gitPassword);
+                        PersonIdent personIdent = new PersonIdent(gitUser, authorEmail);
+
+                        doAddCommitAndPushFiles(git, credentials, personIdent, remote, branch);
+                    } catch (Exception e) {
+                        handleException(e);
                     }
 
                 }
@@ -133,9 +150,74 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
         }
     }
 
-    protected void doAddCommitAndPushFiles(Git git) {
+    private void addFiles(Git git, File... files) throws GitAPIException, IOException {
+        File rootDir = GitHelpers.getRootGitDirectory(git);
+        for (File file : files) {
+            String relativePath = getFilePattern(rootDir, file);
+            git.add().addFilepattern(relativePath).call();
+        }
     }
 
-    protected void handleGitException(GitAPIException e) {
+    private String getFilePattern(File rootDir, File file) throws IOException {
+        String relativePath = Files.getRelativePath(rootDir, file);
+        if (relativePath.startsWith(File.separator)) {
+            relativePath = relativePath.substring(1);
+        }
+        return relativePath.replace(File.separatorChar, '/');
+    }
+
+
+    protected void doAddCommitAndPushFiles(Git git, CredentialsProvider credentials, PersonIdent personIdent, String remote, String branch) throws IOException, GitAPIException {
+/*
+        File rootDir = GitHelpers.getRootGitDirectory(git);
+        File[] files = rootDir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (!ignoreRootFile(file)) {
+                    String relativePath = getFilePattern(rootDir, file);
+                    git.add().addFilepattern(relativePath).call();
+                }
+            }
+        }
+*/
+        git.add().addFilepattern(".").call();
+        doCommitAndPush(git, "Initial import", credentials, personIdent, remote, branch);
+    }
+
+    protected RevCommit doCommitAndPush(Git git, String message, CredentialsProvider credentials, PersonIdent author, String remote, String branch) throws IOException, GitAPIException {
+        CommitCommand commit = git.commit().setAll(true).setMessage(message);
+        if (author != null) {
+            commit = commit.setAuthor(author);
+        }
+
+        RevCommit answer = commit.call();
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Committed " + answer.getId() + " " + answer.getFullMessage());
+        }
+
+        if (isPushOnCommit()) {
+            Iterable<PushResult> results = git.push().setCredentialsProvider(credentials).setRemote(remote).call();
+            for (PushResult result : results) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Pushed " + result.getMessages() + " " + result.getURI() + " branch: " + branch  +  " updates: " + GitHelpers.toString(result.getRemoteUpdates()));
+                }
+            }
+        }
+        return answer;
+
+    }
+
+    protected boolean isPushOnCommit() {
+        return true;
+    }
+
+    protected boolean ignoreRootFile(File file) {
+        String name = file.getName().toLowerCase();
+        return name.equals(".git") || name.equals("tmp") || name.equals("target");
+    }
+
+    protected void handleException(Throwable e) {
+        LOG.warn("Caught: " + e, e);
+        throw new RuntimeException(e);
     }
 }
