@@ -1,4 +1,4 @@
-package org.jboss.forge.rest.startup;
+package org.jboss.forge.rest.web;
 
 import org.jboss.forge.rest.producer.FurnaceProducer;
 

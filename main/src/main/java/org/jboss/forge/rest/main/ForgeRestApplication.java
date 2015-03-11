@@ -1,6 +1,10 @@
-package org.jboss.forge.rest;
+package org.jboss.forge.rest.main;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import org.apache.cxf.feature.LoggingFeature;
+import org.jboss.forge.rest.CommandsResource;
+import org.jboss.forge.rest.ProjectsResource;
+import org.jboss.forge.rest.RootResource;
 
 import javax.inject.Inject;
 import javax.ws.rs.ApplicationPath;
@@ -11,6 +15,9 @@ import java.util.Set;
 
 @ApplicationPath("/")
 public class ForgeRestApplication extends Application {
+    @Inject
+    ForgeInitialiser forgeInitialiser;
+
     @Inject
     RootResource rootResource;
 
@@ -27,7 +34,12 @@ public class ForgeRestApplication extends Application {
                         rootResource,
                         forgeResource,
                         projectsResource,
-                        new JacksonJsonProvider()
+                        new JacksonJsonProvider(),
+/*
+                        new SwaggerFeature(),
+                        new EnableJMXFeature(),
+*/
+                        new LoggingFeature()
                 )
         );
     }

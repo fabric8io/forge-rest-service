@@ -60,4 +60,11 @@ public class ExecutionResult {
     public boolean isCanMoveToNextStep() {
         return canMoveToNextStep;
     }
+
+    /**
+     * Returns true if the command completed successfully and its either not a wizard command or it is a wizard and the last page was completed
+     */
+    public boolean isCommandCompleted() {
+        return status.equals(ExecutionStatus.SUCCESS) && (wizardResults == null || !isCanMoveToNextStep());
+    }
 }

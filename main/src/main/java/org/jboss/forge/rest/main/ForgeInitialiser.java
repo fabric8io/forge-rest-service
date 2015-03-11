@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.forge.rest;
+package org.jboss.forge.rest.main;
 
 import org.apache.deltaspike.core.api.config.ConfigProperty;
 import org.jboss.forge.rest.producer.FurnaceProducer;

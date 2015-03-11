@@ -21,6 +21,7 @@ import org.jboss.forge.rest.dto.ExecutionResult;
 import org.jboss.forge.rest.dto.UICommands;
 import org.jboss.forge.rest.dto.ValidationResult;
 import org.jboss.forge.rest.dto.WizardResultsDTO;
+import org.jboss.forge.rest.hooks.CommandCompletePostProcessor;
 import org.jboss.forge.rest.ui.RestUIContext;
 import org.jboss.forge.rest.ui.RestUIProvider;
 import org.jboss.forge.rest.ui.RestUIRuntime;
@@ -59,6 +60,9 @@ public class CommandsResource {
 
     @Inject
     private CommandFactory commandFactory;
+
+    @Inject
+    private CommandCompletePostProcessor commandCompletePostProcessor;
 
     private ConverterFactory converterFactory;
 
@@ -240,6 +244,9 @@ public class CommandsResource {
                     UICommands.populateController(inputs, controller, getConverterFactory());
                     answer = executeController(context, name, executionRequest, controller);
                 }
+                if (answer.isCommandCompleted() && commandCompletePostProcessor != null) {
+                    commandCompletePostProcessor.firePostCompleteActions(name, executionRequest, context, controller, answer);
+                }
                 return Response.ok(answer).build();
             }
         } catch (Throwable e) {
@@ -247,6 +254,7 @@ public class CommandsResource {
             throw e;
         }
     }
+
 
 
     @POST
@@ -351,8 +359,6 @@ public class CommandsResource {
             AddonRegistry addonRegistry = furnace.getAddonRegistry();
             Imported<ConverterFactory> converterFactoryImport = addonRegistry.getServices(ConverterFactory.class);
             converterFactory = converterFactoryImport.get();
-            System.out.println("======== loaded converter factory: " + converterFactory);
-
         }
         return converterFactory;
     }

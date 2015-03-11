@@ -5,33 +5,40 @@ import org.jboss.forge.addon.ui.context.AbstractUIContext;
 import org.jboss.forge.addon.ui.context.UISelection;
 import org.jboss.forge.addon.ui.util.Selections;
 
-public class RestUIContext extends AbstractUIContext
-{
-   private final Resource<?> selection;
-   private final RestUIProvider provider = new RestUIProvider();
+import java.io.File;
 
-   public RestUIContext()
-   {
-      this.selection = null;
-   }
+public class RestUIContext extends AbstractUIContext {
+    private final Resource<?> selection;
+    private final RestUIProvider provider = new RestUIProvider();
 
-   public RestUIContext(Resource<?> selection)
-   {
-      super();
-      this.selection = selection;
-   }
+    public RestUIContext() {
+        this.selection = null;
+    }
 
-   @SuppressWarnings("unchecked")
-   @Override
-   public <SELECTIONTYPE> UISelection<SELECTIONTYPE> getInitialSelection()
-   {
-      return (UISelection<SELECTIONTYPE>) Selections.from(selection);
-   }
+    public RestUIContext(Resource<?> selection) {
+        super();
+        this.selection = selection;
+    }
 
-   @Override
-   public RestUIProvider getProvider()
-   {
-      return provider;
-   }
+    public File getInitialSelectionFile() {
+        if (selection != null) {
+            String fullyQualifiedName = selection.getFullyQualifiedName();
+            if (fullyQualifiedName != null) {
+                return new File(fullyQualifiedName);
+            }
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <SELECTIONTYPE> UISelection<SELECTIONTYPE> getInitialSelection() {
+        return (UISelection<SELECTIONTYPE>) Selections.from(selection);
+    }
+
+    @Override
+    public RestUIProvider getProvider() {
+        return provider;
+    }
 
 }

@@ -13,13 +13,17 @@
  *  implied.  See the License for the specific language governing
  *  permissions and limitations under the License.
  */
-package org.jboss.forge.rest;
+package org.jboss.forge.rest.main;
 
 import io.fabric8.rest.utils.Servers;
 
 public class Main {
 
     public static void main(final String[] args) throws Exception {
+        // lets set a default port
+        if (System.getProperty("HTTP_PORT") == null) {
+            System.setProperty("HTTP_PORT", "8599");
+        }
         Servers.startServer("Forge REST API").join();
     }
 

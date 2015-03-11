@@ -16,16 +16,11 @@
 
     <assertj.core.version>1.7.0</assertj.core.version>
     <deltaspike.version>1.0.3</deltaspike.version>
-    <fabric8.version>2.0.27</fabric8.version>
+    <fabric8.version>2.0.32</fabric8.version>
     <jackson.version>2.4.1</jackson.version>
     <junit.version>4.11</junit.version>
 
-    <!--
-    lets use the same version as is available in eclipse for now...
-
-    <furnace.version>2.13.0.Final</furnace.version>
-    -->
-    <furnace.version>2.14.0.Final</furnace.version>
+    <furnace.version>2.15.0.Final</furnace.version>
   </properties>
 
   <dependencyManagement>
