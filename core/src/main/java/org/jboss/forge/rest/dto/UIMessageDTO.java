@@ -31,8 +31,10 @@ public class UIMessageDTO {
 
     public static List<UIMessageDTO> toDtoList(Iterable<UIMessage> messages) {
         List<UIMessageDTO> answer = new ArrayList<>();
-        for (UIMessage message : messages) {
-            answer.add(new UIMessageDTO(message));
+        if (messages != null) {
+            for (UIMessage message : messages) {
+                answer.add(new UIMessageDTO(message));
+            }
         }
         return answer;
     }

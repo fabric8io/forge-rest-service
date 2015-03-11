@@ -27,6 +27,7 @@ public class ValidationResult {
     private final boolean canExecute;
     private final String out;
     private final String err;
+    private WizardResultsDTO wizardResults;
 
     public ValidationResult(List<UIMessageDTO> messages, boolean valid, boolean canExecute, String out, String err) {
         this.messages = messages;
@@ -65,5 +66,13 @@ public class ValidationResult {
 
     public boolean isValid() {
         return valid;
+    }
+
+    public void setWizardResults(WizardResultsDTO wizardResults) {
+        this.wizardResults = wizardResults;
+    }
+
+    public WizardResultsDTO getWizardResults() {
+        return wizardResults;
     }
 }

@@ -24,9 +24,11 @@ import org.jboss.forge.addon.projects.ProjectProvider;
 import org.jboss.forge.addon.projects.ProjectType;
 import org.jboss.forge.addon.ui.command.UICommand;
 import org.jboss.forge.addon.ui.controller.CommandController;
+import org.jboss.forge.addon.ui.facets.HintsFacet;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.SelectComponent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
+import org.jboss.forge.addon.ui.output.UIMessage;
 import org.jboss.forge.addon.ui.result.CompositeResult;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.util.InputComponents;
@@ -42,6 +44,7 @@ import java.util.regex.Pattern;
 
 import static org.jboss.forge.furnace.util.Strings.capitalize;
 import static org.jboss.forge.rest.dto.JsonSchemaTypes.getJsonSchemaTypeName;
+import static org.jboss.forge.rest.dto.UIMessageDTO.toDtoList;
 
 /**
  */
@@ -197,12 +200,15 @@ public class UICommands {
         Set<String> inputKeys = new HashSet<>(inputs.keySet());
         if (requestedInputs != null) {
             inputKeys.retainAll(requestedInputs.keySet());
-            for (String key : inputKeys) {
+            Set<Map.Entry<String, InputComponent<?, ?>>> entries = inputs.entrySet();
+            for (Map.Entry<String, InputComponent<?, ?>> entry : entries) {
+                String key = entry.getKey();
+                InputComponent<?, ?> component = entry.getValue();
                 String textValue = requestedInputs.get(key);
                 Object value = textValue;
-                InputComponent<?, ?> component = inputs.get(key);
-                if (component != null) {
+                if (component != null && textValue != null) {
                     Converter<String, ?> valueConverter = component.getValueConverter();
+                    boolean updated = false;
                     if (valueConverter != null) {
                         value = valueConverter.convert(textValue);
                     } else {
@@ -211,8 +217,17 @@ public class UICommands {
                             Class<? extends Enum> enumType = (Class<? extends Enum>) valueType;
                             value = Enum.valueOf(enumType, textValue);
                         }
+/*
+                        Iterable<HintsFacet> facets = component.getFacets();
+                        for (HintsFacet facet : facets) {
+                            facet.setInputType(textValue);
+                            updated = true;
+                        }
+*/
                     }
-                    InputComponents.setValueFor(converterFactory, component, value);
+                    if (!updated) {
+                        InputComponents.setValueFor(converterFactory, component, value);
+                    }
                 } else {
                     controller.setValueFor(key, value);
                 }
@@ -231,6 +246,17 @@ public class UICommands {
         String detail = null;
         ExecutionStatus status = ExecutionStatus.SUCCESS;
         return new ExecutionResult(status, message, out, err, detail, canMoveToNextStep);
+    }
+
+
+    public static ValidationResult createValidationResult(RestUIContext context, CommandController controller, List<UIMessage> messages, boolean canMoveToNextStep) {
+        boolean valid = controller.isValid();
+        boolean canExecute = controller.canExecute();
+
+        RestUIProvider provider = context.getProvider();
+        String out = provider.getOut();
+        String err = provider.getErr();
+        return new ValidationResult(toDtoList(messages), valid, canExecute, out, err);
     }
 
     protected static String getResultMessage(Result result) {
