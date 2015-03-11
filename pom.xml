@@ -17,6 +17,7 @@
     <assertj.core.version>1.7.0</assertj.core.version>
     <deltaspike.version>1.0.3</deltaspike.version>
     <fabric8.version>2.0.32</fabric8.version>
+    <hawtio.version>1.4.44</hawtio.version>
     <jackson.version>2.4.1</jackson.version>
     <junit.version>4.11</junit.version>
 

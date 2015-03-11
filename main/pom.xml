@@ -37,6 +37,18 @@
       <version>${fabric8.version}</version>
 -->
     </dependency>
+
+    <dependency>
+      <groupId>io.fabric8</groupId>
+      <artifactId>fabric8-cdi</artifactId>
+      <version>${fabric8.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.hawt</groupId>
+      <artifactId>hawtio-git</artifactId>
+      <version>${hawtio.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
