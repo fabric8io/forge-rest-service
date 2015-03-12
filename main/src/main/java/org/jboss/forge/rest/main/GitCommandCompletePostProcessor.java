@@ -18,6 +18,10 @@
 package org.jboss.forge.rest.main;
 
 import io.fabric8.cdi.annotations.Service;
+import io.fabric8.repo.git.CreateRepositoryDTO;
+import io.fabric8.repo.git.GitRepoClient;
+import io.fabric8.repo.git.JsonHelper;
+import io.fabric8.repo.git.RepositoryDTO;
 import io.fabric8.utils.Files;
 import org.apache.deltaspike.core.api.config.ConfigProperty;
 import org.eclipse.jgit.api.CommitCommand;
@@ -94,20 +98,34 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
                         Git git = initCommand.call();
                         LOG.info("Initialised an empty git configuration repo at {}", basedir.getAbsolutePath());
 
-                        String remote = gogsUrl.toString();
-                        int idx = remote.indexOf("://");
+                        String address = gogsUrl.toString();
+                        int idx = address.indexOf("://");
                         if (idx > 0) {
-                            remote = "http" + remote.substring(idx);
+                            address = "http" + address.substring(idx);
                         }
-                        if (!remote.endsWith("/")) {
-                            remote += "/" + gitUser + "/" + named + ".git";
+                        if (!address.endsWith("/")) {
+                            address += "/";
                         }
+                        // lets create the repository
+                        GitRepoClient repoClient = new GitRepoClient(address, gitUser, gitPassword);
+                        CreateRepositoryDTO createRepository = new CreateRepositoryDTO();
+                        createRepository.setName(named);
+                        RepositoryDTO repository = repoClient.createRepository(createRepository);
+                        if (repository != null) {
+                            System.out.println("Got repository: " + JsonHelper.toJson(repository));
+                            String url = repository.getUrl();
+                            System.out.println("URL is: " + url);
+                        }
+
+                        String remote = address + gitUser + "/" + named + ".git";
                         LOG.info("Using remote: " + remote);
                         String branch = "master";
                         configureBranch(git, branch, remote);
 
                         // TODO take these from the request?
                         String authorEmail = "dummy@gmail.com";
+
+
 
                         CredentialsProvider credentials = new UsernamePasswordCredentialsProvider(gitUser, gitPassword);
                         PersonIdent personIdent = new PersonIdent(gitUser, authorEmail);
@@ -199,7 +217,7 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
             Iterable<PushResult> results = git.push().setCredentialsProvider(credentials).setRemote(remote).call();
             for (PushResult result : results) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Pushed " + result.getMessages() + " " + result.getURI() + " branch: " + branch  +  " updates: " + GitHelpers.toString(result.getRemoteUpdates()));
+                    LOG.debug("Pushed " + result.getMessages() + " " + result.getURI() + " branch: " + branch + " updates: " + GitHelpers.toString(result.getRemoteUpdates()));
                 }
             }
         }
