@@ -55,4 +55,14 @@
     <module>main</module>
     <module>web</module>
   </modules>
+
+  <profiles>
+   <profile>
+      <id>fabric-snapshot</id>
+      <properties>
+        <fabric8.version>2.2-SNAPSHOT</fabric8.version>
+      </properties>
+    </profile>
+  </profiles>
+  
 </project>
