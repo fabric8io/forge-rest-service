@@ -2,6 +2,9 @@ package org.jboss.forge.rest.dto;
 
 import io.fabric8.utils.Strings;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ExecutionResult {
 	private final ExecutionStatus status;
 	private final String message;
@@ -10,6 +13,7 @@ public class ExecutionResult {
     private final String detail;
     private WizardResultsDTO wizardResults;
     private boolean canMoveToNextStep;
+    private Map<String,String> outputProperties = new HashMap<>();
 
     public ExecutionResult(ExecutionStatus status, String message, String output, String err, String detail, boolean canMoveToNextStep) {
         this.status = status;
@@ -82,4 +86,14 @@ public class ExecutionResult {
         }
     }
 
+    public Map<String, String> getOutputProperties() {
+        return outputProperties;
+    }
+
+    public void setOutputProperty(String name, String value) {
+        if (outputProperties == null) {
+            outputProperties = new HashMap<>();
+        }
+        outputProperties.put(name, value);
+    }
 }

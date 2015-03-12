@@ -121,14 +121,18 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
                         RepositoryDTO repository = repoClient.createRepository(createRepository);
                         if (repository != null) {
                             System.out.println("Got repository: " + JsonHelper.toJson(repository));
-                                fullName = repository.getFullName();
+                            fullName = repository.getFullName();
                         }
                         if (Strings.isNullOrEmpty(fullName)) {
                             fullName = user + "/" + named;
                         }
                         String htmlUrl = address + user + "/" + named;
                         String remote = address + user + "/" + named + ".git";
-                        results.appendOut("Created git repository " + fullName + " at: " + htmlUrl);
+                        //results.appendOut("Created git repository " + fullName + " at: " + htmlUrl);
+
+                        results.setOutputProperty("fullName", fullName);
+                        results.setOutputProperty("cloneUrl", remote);
+                        results.setOutputProperty("htmlUrl", htmlUrl);
 
                         // now lets import the code and publish
                         LOG.info("Using remote: " + remote);
