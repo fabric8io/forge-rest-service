@@ -1,9 +1,11 @@
 package org.jboss.forge.rest.dto;
 
+import io.fabric8.utils.Strings;
+
 public class ExecutionResult {
 	private final ExecutionStatus status;
 	private final String message;
-	private final String output;
+	private String output;
 	private final String err;
     private final String detail;
     private WizardResultsDTO wizardResults;
@@ -67,4 +69,17 @@ public class ExecutionResult {
     public boolean isCommandCompleted() {
         return status.equals(ExecutionStatus.SUCCESS) && (wizardResults == null || !isCanMoveToNextStep());
     }
+
+    public void setOutput(String output) {
+        this.output = output;
+    }
+
+    public void appendOut(String text) {
+        if (Strings.isNullOrBlank(this.output)) {
+            this.output = text;
+        } else {
+            this.output += "\n" + text;
+        }
+    }
+
 }

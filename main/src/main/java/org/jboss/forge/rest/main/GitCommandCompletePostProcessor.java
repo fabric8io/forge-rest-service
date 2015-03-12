@@ -106,29 +106,37 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
                         if (!address.endsWith("/")) {
                             address += "/";
                         }
+
+                        // TODO take these from the request?
+                        String user = gitUser;
+                        String password = gitPassword;
+                        String authorEmail = "dummy@gmail.com";
+
                         // lets create the repository
-                        GitRepoClient repoClient = new GitRepoClient(address, gitUser, gitPassword);
+                        GitRepoClient repoClient = new GitRepoClient(address, user, password);
                         CreateRepositoryDTO createRepository = new CreateRepositoryDTO();
                         createRepository.setName(named);
+
+                        String fullName = null;
                         RepositoryDTO repository = repoClient.createRepository(createRepository);
                         if (repository != null) {
                             System.out.println("Got repository: " + JsonHelper.toJson(repository));
-                            String url = repository.getUrl();
-                            System.out.println("URL is: " + url);
+                                fullName = repository.getFullName();
                         }
+                        if (Strings.isNullOrEmpty(fullName)) {
+                            fullName = user + "/" + named;
+                        }
+                        String htmlUrl = address + user + "/" + named;
+                        String remote = address + user + "/" + named + ".git";
+                        results.appendOut("Created git repository " + fullName + " at: " + htmlUrl);
 
-                        String remote = address + gitUser + "/" + named + ".git";
+                        // now lets import the code and publish
                         LOG.info("Using remote: " + remote);
                         String branch = "master";
                         configureBranch(git, branch, remote);
 
-                        // TODO take these from the request?
-                        String authorEmail = "dummy@gmail.com";
-
-
-
-                        CredentialsProvider credentials = new UsernamePasswordCredentialsProvider(gitUser, gitPassword);
-                        PersonIdent personIdent = new PersonIdent(gitUser, authorEmail);
+                        CredentialsProvider credentials = new UsernamePasswordCredentialsProvider(user, password);
+                        PersonIdent personIdent = new PersonIdent(user, authorEmail);
 
                         doAddCommitAndPushFiles(git, credentials, personIdent, remote, branch);
                     } catch (Exception e) {
