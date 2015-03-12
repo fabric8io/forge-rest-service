@@ -23,7 +23,6 @@ import org.jboss.forge.rest.dto.ValidationResult;
 import org.jboss.forge.rest.dto.WizardResultsDTO;
 import org.jboss.forge.rest.hooks.CommandCompletePostProcessor;
 import org.jboss.forge.rest.ui.RestUIContext;
-import org.jboss.forge.rest.ui.RestUIProvider;
 import org.jboss.forge.rest.ui.RestUIRuntime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.jboss.forge.rest.dto.UICommands.createCommandInputDTO;
-import static org.jboss.forge.rest.dto.UIMessageDTO.toDtoList;
 
 @Path("/api/forge")
 @Stateless
@@ -194,7 +192,8 @@ public class CommandsResource {
                     boolean canMoveToNextStep = false;
                     for (Map<String, String> inputs : inputList) {
                         UICommands.populateController(inputs, lastController, getConverterFactory());
-                        ValidationResult stepValidation = controllerValidate(executionRequest, name, context, lastController);
+                        List<UIMessage> messages = lastController.validate();
+                        ValidationResult stepValidation = UICommands.createValidationResult(context, lastController, messages);
                         stepValidationList.add(stepValidation);
                         if (!stepValidation.isValid()) {
                             break;
@@ -296,7 +295,7 @@ public class CommandsResource {
                             // lets assume we can execute now
                             lastResult = lastController.validate();
                             LOG.debug("Invoked command " + name + " with " + executionRequest + " result: " + lastResult);
-                            ValidationResult stepResults = UICommands.createValidationResult(context, controller, lastResult, false);
+                            ValidationResult stepResults = UICommands.createValidationResult(context, controller, lastResult);
                             stepResultList.add(stepResults);
                             break;
                         } else if (!valid) {
@@ -319,13 +318,13 @@ public class CommandsResource {
                                 UICommands.populateController(stepControllerInputs, stepController, getConverterFactory());
                                 lastResult = stepController.validate();
                                 LOG.debug("Invoked command " + name + " with " + executionRequest + " result: " + lastResult);
-                                ValidationResult stepResults = UICommands.createValidationResult(context, controller, lastResult, false);
+                                ValidationResult stepResults = UICommands.createValidationResult(context, controller, lastResult);
                                 stepResultList.add(stepResults);
                             }
                             break;
                         }
                     }
-                    answer = UICommands.createValidationResult(context, controller, lastResult, canMoveToNextStep);
+                    answer = UICommands.createValidationResult(context, controller, lastResult);
                     // TODO do we need stepValidationList?
                     //WizardResultsDTO wizardResultsDTO = new WizardResultsDTO(stepPropertiesList, stepValidationList, stepResultList);
                     WizardResultsDTO wizardResultsDTO = new WizardResultsDTO(stepPropertiesList, stepResultList, new ArrayList<ExecutionResult>());
@@ -335,7 +334,7 @@ public class CommandsResource {
                     UICommands.populateController(inputs, controller, getConverterFactory());
                     List<UIMessage> result = controller.validate();
                     LOG.debug("Invoked command " + name + " with " + executionRequest + " result: " + result);
-                    answer = UICommands.createValidationResult(context, controller, result, false);
+                    answer = UICommands.createValidationResult(context, controller, result);
                 }
                 return Response.ok(answer).build();
             }
@@ -343,58 +342,6 @@ public class CommandsResource {
             LOG.warn("Failed to invoke command " + name + " on " + executionRequest + ". " + e, e);
             throw e;
         }
-    }
-
-
-
-    @POST
-    @Path("/command/validate2/{name}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response validateCommand2(@PathParam("name") String name, ExecutionRequest executionRequest) throws Exception {
-        try {
-            String resourcePath = executionRequest.getResource();
-            try (RestUIContext context = createUIContext(resourcePath)) {
-                UICommand command = getCommandByName(context, name);
-                if (command == null) {
-                    return Response.status(Status.NOT_FOUND).build();
-                }
-                List<ValidationResult> answer = new ArrayList<>();
-                CommandController controller = createController(context, command);
-                if (controller instanceof WizardCommandController) {
-                    WizardCommandController wizardCommandController = (WizardCommandController) controller;
-                    LOG.warn("TODO: WizardCommandController " + controller);
-                    //answer = new ExecutionResult(ExecutionStatus.FAILED, "TODO: WizardCommandController not supported yet", "" + controller, null, null);
-                } else {
-                    List<Map<String, String>> inputList = executionRequest.getInputList();
-                    for (Map<String, String> inputs : inputList) {
-                        UICommands.populateController(inputs, controller, getConverterFactory());
-                        ValidationResult result = controllerValidate(executionRequest, name, context, controller);
-                        if (result != null) {
-                            answer.add(result);
-                        }
-                    }
-                }
-                return Response.ok(answer).build();
-            }
-        } catch (Throwable e) {
-            LOG.warn("Failed to invoke command " + name + " on " + executionRequest + ". " + e, e);
-            throw e;
-        }
-    }
-
-    protected static ValidationResult controllerValidate(ExecutionRequest executionRequest, String name, RestUIContext context, CommandController controller) {
-        ValidationResult answer;
-        List<UIMessage> messages = controller.validate();
-        boolean valid = controller.isValid();
-        boolean canExecute = controller.canExecute();
-        LOG.debug("Validate command " + name + " with " + executionRequest + " messages: " + messages);
-
-        RestUIProvider provider = context.getProvider();
-        String out = provider.getOut();
-        String err = provider.getErr();
-        answer = new ValidationResult(toDtoList(messages), valid, canExecute, out, err);
-        return answer;
     }
 
     protected CommandInfoDTO createCommandInfoDTO(RestUIContext context, String name) {

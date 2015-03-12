@@ -32,6 +32,7 @@ import org.jboss.forge.addon.ui.output.UIMessage;
 import org.jboss.forge.addon.ui.result.CompositeResult;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.util.InputComponents;
+import org.jboss.forge.rest.CommandsResource;
 import org.jboss.forge.rest.ui.RestUIContext;
 import org.jboss.forge.rest.ui.RestUIProvider;
 
@@ -208,7 +209,6 @@ public class UICommands {
                 Object value = textValue;
                 if (component != null && textValue != null) {
                     Converter<String, ?> valueConverter = component.getValueConverter();
-                    boolean updated = false;
                     if (valueConverter != null) {
                         value = valueConverter.convert(textValue);
                     } else {
@@ -217,23 +217,13 @@ public class UICommands {
                             Class<? extends Enum> enumType = (Class<? extends Enum>) valueType;
                             value = Enum.valueOf(enumType, textValue);
                         }
-/*
-                        Iterable<HintsFacet> facets = component.getFacets();
-                        for (HintsFacet facet : facets) {
-                            facet.setInputType(textValue);
-                            updated = true;
-                        }
-*/
                     }
-                    if (!updated) {
-                        InputComponents.setValueFor(converterFactory, component, value);
-                    }
+                    InputComponents.setValueFor(converterFactory, component, value);
                 } else {
                     controller.setValueFor(key, value);
                 }
 
                 Object actual = controller.getValueFor(key);
-                System.out.println("=== " + key + " = " + actual + " Class: " + (actual != null ? actual.getClass().getName() : "null"));
             }
         }
     }
@@ -249,7 +239,7 @@ public class UICommands {
     }
 
 
-    public static ValidationResult createValidationResult(RestUIContext context, CommandController controller, List<UIMessage> messages, boolean canMoveToNextStep) {
+    public static ValidationResult createValidationResult(RestUIContext context, CommandController controller, List<UIMessage> messages) {
         boolean valid = controller.isValid();
         boolean canExecute = controller.canExecute();
 
@@ -278,4 +268,5 @@ public class UICommands {
             return result.getMessage();
         }
     }
+
 }
